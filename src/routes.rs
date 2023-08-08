@@ -87,7 +87,7 @@ pub(crate) async fn process_b2c(data: web::Data<Pool>) -> impl Responder {
     let consumer_secret: String = get_settings_details(&data, String::from("consumersecretmpesa"));
     let auth_token_url: String = get_settings_details(&data, String::from("authtokenurlmpesa"));
 
-    let mobile_no = String::from("254712*****4");
+    let mobile_no = String::from("25471******4");
     let amount_paid: u32 = 150;
     let command_id = TRANSACTION_COMMAND_ID.to_string();
     let _remarks = TRANSACTION_REMARKS.to_string();
@@ -130,22 +130,30 @@ pub(crate) async fn process_c2b_payment(data: web::Data<Pool>) -> impl Responder
     let api_url: String =
         String::from("https://sandbox.safaricom.co.ke/mpesa/stkpush/v1/processrequest");
     let business_short_code: String = String::from("174***");
-    let _password: String = String::from("***");
+    let pass_key: String =
+        String::from("********");
     let time_stamp: String = Local::now().format("%Y%m%d%H%M%S").to_string(); //"YYYYMMDDHHmmss";
     let transaction_type: String = String::from("CustomerPayBillOnline");
     let _amount: u32 = 1;
-    let party_a: u64 = 25470*****9;
+    let party_a: u64 = 25470******9;
     let party_b: u32 = 174***;
-    let phone_number: u64 = 25472*****8;
+    let phone_number: u64 = 25472******8;
     let call_back_url: String = String::from("https://mydomain.com/path");
     let account_reference: String = String::from("Company X LTD");
     let transaction_desc: String = String::from("Payment of X");
+
+    // _password = Shortcode+Passkey+Timestamp)
+    let short_code = &business_short_code;
+    let mut _password: String = short_code.to_string();
+    _password.push_str(&pass_key);
+    _password.push_str(&time_stamp);
+    let encoded_password = general_purpose::STANDARD.encode(_password);
 
     let customer_to_business_details: CustomerToBusinessPaymentInputDetails =
         CustomerToBusinessPaymentInputDetails {
             api_url: api_url,
             business_short_code: business_short_code,
-            _password: _password,
+            _password: encoded_password,
             time_stamp: time_stamp,
             transaction_type: transaction_type,
             _amount: _amount,
