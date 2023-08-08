@@ -12,8 +12,10 @@ use serde::{Deserialize, Serialize};
 
 use crate::models::{
     AuthTokenResponseData, BusinessToCustomerData, BusinessToCustomerErrorResponseData,
-    BusinessToCustomerInputDetails, BusinessToCustomerResponseData, RegisterUrlData,
-    RegisterUrlInputDetails, RegisterUrlResponseData,
+    BusinessToCustomerInputDetails, BusinessToCustomerResponseData, CustomerToBusinessPaymentData,
+    CustomerToBusinessPaymentErrorResponseData, CustomerToBusinessPaymentInputDetails,
+    CustomerToBusinessPaymentResponseData, RegisterUrlData, RegisterUrlInputDetails,
+    RegisterUrlResponseData,
 };
 
 const AUTHORISATION_BEARER: &str = "Bearer";
@@ -205,6 +207,55 @@ impl MpesaGateway {
         };
 
         business_to_customer_response_data
+    }
+
+    pub async fn get_c2b_payment(
+        &self,
+        customer_to_business_details: CustomerToBusinessPaymentInputDetails,
+    ) -> CustomerToBusinessPaymentResponseData {
+        let xy = self.get_auth_token();
+        let access_token: String = xy.await;
+        //println!("access_token: {:?}", &access_token);
+
+        if access_token.is_empty() || customer_to_business_details.api_url.is_empty() {
+            /*
+            println!("access_token: {:?}", &access_token);
+            println!(
+                "customer_to_business_details: {:?}",
+                &customer_to_business_details
+            );
+            */
+            println!("access_token or customer_to_business_details is empty");
+            let b = CustomerToBusinessPaymentResponseData {
+                MerchantRequestID: None,
+                CheckoutRequestID: None,
+                ResponseCode: None,
+                ResponseDescription: None,
+                CustomerMessage: None,
+            };
+            return b;
+        }
+
+        let _result =
+            customer_to_business_payment(customer_to_business_details, access_token).await;
+
+        let customer_to_business_response_data: CustomerToBusinessPaymentResponseData =
+            match _result {
+                Ok(a) => a,
+                Err(e) => {
+                    let b = CustomerToBusinessPaymentResponseData {
+                        MerchantRequestID: None,
+                        CheckoutRequestID: None,
+                        ResponseCode: None,
+                        ResponseDescription: None,
+                        CustomerMessage: None,
+                    };
+
+                    b
+                }
+            };
+
+        customer_to_business_response_data
     }
 }
 
@@ -500,4 +551,181 @@ pub async fn business_to_customer(
     };
 
     Ok(business_to_customer_response_data)
+}
+
+// network initiated push
+pub async fn customer_to_business_payment(
+    customer_to_business_payment_details: CustomerToBusinessPaymentInputDetails,
+    access_token: String,
+) -> std::result::Result<CustomerToBusinessPaymentResponseData, reqwest::Error> {
+    let api_url: String = customer_to_business_payment_details.api_url;
+    let business_short_code: String = customer_to_business_payment_details.business_short_code;
+    let _password: String = customer_to_business_payment_details._password;
+    let time_stamp: String = customer_to_business_payment_details.time_stamp;
+    let transaction_type: String = customer_to_business_payment_details.transaction_type;
+    let _amount: u32 = customer_to_business_payment_details._amount;
+    let party_a: u64 = customer_to_business_payment_details.party_a;
+    let party_b: u32 = customer_to_business_payment_details.party_b;
+    let phone_number: u64 = customer_to_business_payment_details.phone_number;
+    let call_back_url: String = customer_to_business_payment_details.call_back_url;
+    let account_reference: String = customer_to_business_payment_details.account_reference;
+    let transaction_desc: String = customer_to_business_payment_details.transaction_desc;
+
+    let customer_to_business_data = CustomerToBusinessPaymentData {
+        BusinessShortCode: business_short_code,
+        Password: _password,
+        Timestamp: time_stamp,
+        TransactionType: transaction_type,
+        Amount: _amount,
+        PartyA: party_a,
+        PartyB: party_b,
+        PhoneNumber: phone_number,
+        CallBackURL: call_back_url,
+        AccountReference: account_reference,
+        TransactionDesc: transaction_desc,
+    };
+
+    let mut customer_to_business_response_data = CustomerToBusinessPaymentResponseData {
+        MerchantRequestID: None,
+        CheckoutRequestID: None,
+        ResponseCode: None,
+        ResponseDescription: None,
+        CustomerMessage: None,
+    };
+
+    /*
+    println!("access_token: {:?}", &access_token);
+    println!("api_url: {:?}", &api_url);
+    println!(
+        "customer_to_business_data: {:?}",
+        &customer_to_business_data
+    );
+    */
+    let client = reqwest::Client::new();
+    // "%Y-%m-%d %H:%M:%S" i.e "yyyy-MM-dd HH:mm:ss"
+    // "%Y-%m-%d %H:%M:%S%.3f" i.e "yyyy-MM-dd HH:mm:ss.SSS"
+    //let date_to_mpesa = Local::now().format("%Y-%m-%d %H:%M:%S%.3f").to_string();
+    let res = client
+        .post(api_url)
+        .header(CONTENT_TYPE, "application/json")
+        .header(ACCEPT, "application/json")
+        .header("Authorization", access_token)
+        .json(&customer_to_business_data)
+        .send()
+        //.await?; //The "?" after the await returns errors immediately and hence will not be captured on match clause below
+        .await;
+
+    match res {
+        Err(e) => {
+            //println!("server not responding");
+            println!("server not responding: {:?}", e.to_string());
+        }
+        Ok(response) => {
+            match response.status() {
+                StatusCode::OK => {
+                    let date_from_mpesa = Local::now().format("%Y-%m-%d %H:%M:%S%.3f").to_string();
+                    let k = String::from(""); //Default value.
+                    let m: u32 = 0; //Default value.
+
+                    let my_output = response
+                        .json::<CustomerToBusinessPaymentResponseData>()
+                        .await?;
+
+                    let merchant_request_id = &my_output.MerchantRequestID.as_ref().unwrap_or(&k);
+                    let checkout_request_id = &my_output.CheckoutRequestID.as_ref().unwrap_or(&k);
+                    let response_code = &my_output.ResponseCode.as_ref().unwrap_or(&k);
+                    let response_description =
+                        &my_output.ResponseDescription.as_ref().unwrap_or(&k);
+                    let customer_message = &my_output.CustomerMessage.as_ref().unwrap_or(&k);
+
+                    //
+                    customer_to_business_response_data.MerchantRequestID =
+                        Some(merchant_request_id.to_string());
+                    customer_to_business_response_data.CheckoutRequestID =
+                        Some(checkout_request_id.to_string());
+                    customer_to_business_response_data.ResponseCode =
+                        Some(response_code.to_string());
+                    customer_to_business_response_data.ResponseDescription =
+                        Some(response_description.to_string());
+                    customer_to_business_response_data.CustomerMessage =
+                        Some(customer_message.to_string());
+                    /*
+                    println!(
+                        "business_to_customer_response_data: {:?}",
+                        &business_to_customer_response_data
+                    );
+                    */
+
+                    /*
+                    create_b2c_acknowledgement(
+                        &data,
+                        originator_conversation_id.to_string(),
+                        conversation_id.to_string(),
+                        response_code.to_string(),
+                        response_description.to_string(),
+                        business_to_customer_data.CommandID,
+                        business_to_customer_data.PartyA,
+                        business_to_customer_data.PartyB,
+                        business_to_customer_data.Amount,
+                        request_id,
+                        error_code,
+                        error_message,
+                        date_to_mpesa,
+                        date_from_mpesa,
+                    );
+                    */
+                }
+                s => {
+                    let date_from_mpesa = Local::now().format("%Y-%m-%d %H:%M:%S%.3f").to_string();
+                    let k = String::from(""); //Default value.
+                    let m: u32 = 0; //Default value.
+                    let my_output = response
+                        .json::<CustomerToBusinessPaymentErrorResponseData>()
+                        .await?;
+
+                    let request_id = &my_output.requestId.as_ref().unwrap_or(&k);
+                    let error_code = &my_output.errorCode.as_ref().unwrap_or(&k);
+                    let error_message = &my_output.errorMessage.as_ref().unwrap_or(&k);
+
+                    let merchant_request_id = request_id.to_string();
+                    let checkout_request_id = String::from("");
+                    let response_code = error_code.to_string();
+                    let response_description = error_message.to_string();
+                    let customer_message = String::from("");
+
+                    customer_to_business_response_data.MerchantRequestID =
+                        Some(merchant_request_id);
+                    customer_to_business_response_data.CheckoutRequestID =
+                        Some(checkout_request_id);
+                    customer_to_business_response_data.ResponseCode = Some(response_code);
+                    customer_to_business_response_data.ResponseDescription =
+                        Some(response_description);
+                    customer_to_business_response_data.CustomerMessage = Some(customer_message);
+
+                    //println!("my_output: {:?}", &my_output);
+
+                    /*
+                    create_b2c_acknowledgement(
+                        &data,
+                        originator_conversation_id.to_string(),
+                        conversation_id.to_string(),
+                        response_code.to_string(),
+                        response_description.to_string(),
+                        business_to_customer_data.CommandID,
+                        business_to_customer_data.PartyA,
+                        business_to_customer_data.PartyB,
+                        business_to_customer_data.Amount,
+                        request_id.to_string(),
+                        error_code.to_string(),
+                        error_message.to_string(),
+                        date_to_mpesa,
+                        date_from_mpesa,
+                    );
+                    */
+                }
+            }
+        }
+    };
+
+    Ok(customer_to_business_response_data)
 }

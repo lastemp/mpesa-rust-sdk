@@ -65,9 +65,10 @@ async fn main() {
             .service(routes::register_client_urls)
             .service(routes::validation_c2b)
             .service(routes::confirmation_c2b)
-            .service(routes::process_b2c)
             .service(routes::get_b2c_timeout)
             .service(routes::get_b2c_result)
+            .service(routes::process_b2c)
+            .service(routes::process_c2b_payment)
     })
     .bind(server_addr)
     {

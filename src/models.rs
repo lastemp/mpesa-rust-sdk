@@ -1,22 +1,5 @@
 use serde::{Deserialize, Serialize};
 
-#[derive(Deserialize)]
-pub struct C2bData {
-    pub TransactionType: String,
-    pub TransID: String,
-    pub TransTime: String,
-    pub TransAmount: String,
-    pub BusinessShortCode: String,
-    pub BillRefNumber: String,
-    pub InvoiceNumber: Option<String>,
-    pub OrgAccountBalance: String,
-    pub ThirdPartyTransID: String,
-    pub MSISDN: String,
-    pub FirstName: String,
-    pub MiddleName: String,
-    pub LastName: String,
-}
-
 #[derive(Serialize)]
 pub struct ValidationResponseData {
     pub ResultCode: String,
@@ -37,19 +20,6 @@ pub struct RegisterUrlData {
     pub ValidationURL: String,
 }
 
-#[derive(Deserialize, Debug)]
-pub struct AuthTokenResponseData {
-    pub access_token: Option<String>,
-    pub expires_in: Option<String>,
-}
-
-#[derive(Deserialize, Debug)]
-pub struct RegisterUrlResponseData {
-    pub OriginatorCoversationID: Option<String>,
-    pub ConversationID: Option<String>,
-    pub ResponseDescription: Option<String>,
-}
-
 #[derive(Serialize, Debug)]
 pub struct BusinessToCustomerData {
     pub InitiatorName: String,
@@ -62,6 +32,51 @@ pub struct BusinessToCustomerData {
     pub QueueTimeOutURL: String,
     pub ResultURL: String,
     pub Occassion: String,
+}
+
+#[derive(Serialize, Debug)]
+pub struct CustomerToBusinessPaymentData {
+    pub BusinessShortCode: String,
+    pub Password: String,
+    pub Timestamp: String,
+    pub TransactionType: String,
+    pub Amount: u32,
+    pub PartyA: u64,
+    pub PartyB: u32,
+    pub PhoneNumber: u64,
+    pub CallBackURL: String,
+    pub AccountReference: String,
+    pub TransactionDesc: String,
+}
+
+#[derive(Deserialize)]
+pub struct C2bData {
+    pub TransactionType: String,
+    pub TransID: String,
+    pub TransTime: String,
+    pub TransAmount: String,
+    pub BusinessShortCode: String,
+    pub BillRefNumber: String,
+    pub InvoiceNumber: Option<String>,
+    pub OrgAccountBalance: String,
+    pub ThirdPartyTransID: String,
+    pub MSISDN: String,
+    pub FirstName: String,
+    pub MiddleName: String,
+    pub LastName: String,
+}
+
+#[derive(Deserialize, Debug)]
+pub struct AuthTokenResponseData {
+    pub access_token: Option<String>,
+    pub expires_in: Option<String>,
+}
+
+#[derive(Deserialize, Debug)]
+pub struct RegisterUrlResponseData {
+    pub OriginatorCoversationID: Option<String>,
+    pub ConversationID: Option<String>,
+    pub ResponseDescription: Option<String>,
 }
 
 #[derive(Deserialize, Debug)]
@@ -142,6 +157,22 @@ pub struct B2CFailedData {
     pub Result: B2CFailedDetails,
 }
 
+#[derive(Deserialize, Debug)]
+pub struct CustomerToBusinessPaymentResponseData {
+    pub MerchantRequestID: Option<String>,
+    pub CheckoutRequestID: Option<String>,
+    pub ResponseCode: Option<String>,
+    pub ResponseDescription: Option<String>,
+    pub CustomerMessage: Option<String>,
+}
+
+#[derive(Deserialize, Debug)]
+pub struct CustomerToBusinessPaymentErrorResponseData {
+    pub requestId: Option<String>,
+    pub errorCode: Option<String>,
+    pub errorMessage: Option<String>,
+}
+
 // This struct holds  Register Url processing data
 pub struct RegisterUrlInputDetails {
     //pub access_token: String,
@@ -166,4 +197,20 @@ pub struct BusinessToCustomerInputDetails {
     pub queue_time_out_url: String,
     pub result_url: String,
     pub _occassion: String,
+}
+
+#[derive(Debug)]
+pub struct CustomerToBusinessPaymentInputDetails {
+    pub api_url: String,
+    pub business_short_code: String,
+    pub _password: String,
+    pub time_stamp: String,
+    pub transaction_type: String,
+    pub _amount: u32,
+    pub party_a: u64,
+    pub party_b: u32,
+    pub phone_number: u64,
+    pub call_back_url: String,
+    pub account_reference: String,
+    pub transaction_desc: String,
 }

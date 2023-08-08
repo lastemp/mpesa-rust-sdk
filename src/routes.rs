@@ -5,7 +5,8 @@ use crate::mpesa::MpesaGateway;
 use crate::{
     models::{
         B2CFailedData, B2CResultData, BusinessToCustomerInputDetails, C2bData,
-        ConfirmationResponseData, MixedTypeValue, RegisterUrlInputDetails, ValidationResponseData,
+        ConfirmationResponseData, CustomerToBusinessPaymentInputDetails, MixedTypeValue,
+        RegisterUrlInputDetails, ValidationResponseData,
     },
     persistence::{
         create_incoming_c2b_mpesa_confirmation_requests,
@@ -19,6 +20,7 @@ use base64::{
     engine::{self, general_purpose},
     Engine as _,
 };
+use chrono::prelude::*;
 use mysql::*;
 use serde::{Deserialize, Serialize};
 use std::str;
@@ -85,8 +87,8 @@ pub(crate) async fn process_b2c(data: web::Data<Pool>) -> impl Responder {
     let consumer_secret: String = get_settings_details(&data, String::from("consumersecretmpesa"));
     let auth_token_url: String = get_settings_details(&data, String::from("authtokenurlmpesa"));
 
-    let mobile_no = String::from("254712765234");
-    let amount_paid: u32 = 1500;
+    let mobile_no = String::from("254712*****4");
+    let amount_paid: u32 = 150;
     let command_id = TRANSACTION_COMMAND_ID.to_string();
     let _remarks = TRANSACTION_REMARKS.to_string();
     let _occassion = TRANSACTION_OCCASSION.to_string();
@@ -114,6 +116,60 @@ pub(crate) async fn process_b2c(data: web::Data<Pool>) -> impl Responder {
     println!(
         "business_to_customer_response_data: {:?}",
         &business_to_customer_response_data
+    );
+
+    format!("")
+}
+
+#[post("/processc2bpayment")]
+pub(crate) async fn process_c2b_payment(data: web::Data<Pool>) -> impl Responder {
+    let consumer_key: String = get_settings_details(&data, String::from("consumerkeympesa"));
+    let consumer_secret: String = get_settings_details(&data, String::from("consumersecretmpesa"));
+    let auth_token_url: String = get_settings_details(&data, String::from("authtokenurlmpesa"));
+
+    let api_url: String =
+        String::from("https://sandbox.safaricom.co.ke/mpesa/stkpush/v1/processrequest");
+    let business_short_code: String = String::from("174***");
+    let _password: String = String::from("***");
+    let time_stamp: String = Local::now().format("%Y%m%d%H%M%S").to_string(); //"YYYYMMDDHHmmss";
+    let transaction_type: String = String::from("CustomerPayBillOnline");
+    let _amount: u32 = 1;
+    let party_a: u64 = 25470*****9;
+    let party_b: u32 = 174***;
+    let phone_number: u64 = 25472*****8;
+    let call_back_url: String = String::from("https://mydomain.com/path");
+    let account_reference: String = String::from("Company X LTD");
+    let transaction_desc: String = String::from("Payment of X");
+
+    let customer_to_business_details: CustomerToBusinessPaymentInputDetails =
+        CustomerToBusinessPaymentInputDetails {
+            api_url: api_url,
+            business_short_code: business_short_code,
+            _password: _password,
+            time_stamp: time_stamp,
+            transaction_type: transaction_type,
+            _amount: _amount,
+            party_a: party_a,
+            party_b: party_b,
+            phone_number: phone_number,
+            call_back_url: call_back_url,
+            account_reference: account_reference,
+            transaction_desc: transaction_desc,
+        };
+
+    /*
+    println!(
+        "customer_to_business_details: {:?}",
+        &customer_to_business_details
+    );
+    */
+    let mpesa_gateway: MpesaGateway =
+        MpesaGateway::new(consumer_key, consumer_secret, auth_token_url);
+    let xy = mpesa_gateway.get_c2b_payment(customer_to_business_details);
+    let customer_to_business_response_data = xy.await;
+    println!(
+        "customer_to_business_response_data: {:?}",
+        &customer_to_business_response_data
     );
 
     format!("")
