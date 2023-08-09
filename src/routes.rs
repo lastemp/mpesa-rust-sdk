@@ -4,9 +4,11 @@ use crate::api_layer::{generate_auth_token, register_url};
 use crate::mpesa::MpesaGateway;
 use crate::{
     models::{
-        B2CFailedData, B2CResultData, BusinessToCustomerInputDetails, C2bData,
-        ConfirmationResponseData, CustomerToBusinessPaymentInputDetails, MixedTypeValue,
-        RegisterUrlInputDetails, ValidationResponseData,
+        B2CFailedData, B2CResultData, BusinessPayBillFailedData, BusinessPayBillInputDetails,
+        BusinessPayBillResultData, BusinessToCustomerInputDetails, C2bData,
+        ConfirmationResponseData, CustomerToBusinessPaymentInputDetails,
+        CustomerToBusinessPaymentResultData, ItemDetails, MixedTypeValue, RegisterUrlInputDetails,
+        ValidationResponseData,
     },
     persistence::{
         create_incoming_c2b_mpesa_confirmation_requests,
@@ -87,8 +89,8 @@ pub(crate) async fn process_b2c(data: web::Data<Pool>) -> impl Responder {
     let consumer_secret: String = get_settings_details(&data, String::from("consumersecretmpesa"));
     let auth_token_url: String = get_settings_details(&data, String::from("authtokenurlmpesa"));
 
-    let mobile_no = String::from("25471******4");
-    let amount_paid: u32 = 150;
+    let mobile_no = String::from("25471***");
+    let amount_paid: u32 = 1500;
     let command_id = TRANSACTION_COMMAND_ID.to_string();
     let _remarks = TRANSACTION_REMARKS.to_string();
     let _occassion = TRANSACTION_OCCASSION.to_string();
@@ -131,13 +133,13 @@ pub(crate) async fn process_c2b_payment(data: web::Data<Pool>) -> impl Responder
         String::from("https://sandbox.safaricom.co.ke/mpesa/stkpush/v1/processrequest");
     let business_short_code: String = String::from("174***");
     let pass_key: String =
-        String::from("********");
+        String::from("***");
     let time_stamp: String = Local::now().format("%Y%m%d%H%M%S").to_string(); //"YYYYMMDDHHmmss";
     let transaction_type: String = String::from("CustomerPayBillOnline");
     let _amount: u32 = 1;
-    let party_a: u64 = 25470******9;
+    let party_a: u64 = 25470***;
     let party_b: u32 = 174***;
-    let phone_number: u64 = 25472******8;
+    let phone_number: u64 = 2547236***;
     let call_back_url: String = String::from("https://mydomain.com/path");
     let account_reference: String = String::from("Company X LTD");
     let transaction_desc: String = String::from("Payment of X");
@@ -178,6 +180,63 @@ pub(crate) async fn process_c2b_payment(data: web::Data<Pool>) -> impl Responder
     println!(
         "customer_to_business_response_data: {:?}",
         &customer_to_business_response_data
+    );
+
+    format!("")
+}
+
+#[post("/processbusinesspaybill")]
+pub(crate) async fn process_business_paybill(data: web::Data<Pool>) -> impl Responder {
+    let consumer_key: String = get_settings_details(&data, String::from("consumerkeympesa"));
+    let consumer_secret: String = get_settings_details(&data, String::from("consumersecretmpesa"));
+    let auth_token_url: String = get_settings_details(&data, String::from("authtokenurlmpesa"));
+
+    let api_url: String =
+        String::from("https://sandbox.safaricom.co.ke/mpesa/b2b/v1/paymentrequest");
+    let _initiator: String = String::from("testapi");
+    let security_credential: String = String::from("***");
+    let command_id: String = String::from("BusinessPayBill");
+    let sender_identifier_type: String = String::from("4");
+    let reciever_identifier_type: String = String::from("4");
+    let _amount: u32 = 145;
+    let party_a: String = String::from("600***");
+    let party_b: String = String::from("000***");
+    let account_reference: String = String::from("353***");
+    let _requester: String = String::from("25470***");
+    let _remarks: String = String::from("ok");
+    let queue_time_out_url: String = String::from("https://mydomain.com/b2b/queue/");
+    let result_url: String = String::from("https://mydomain.com/b2b/result/");
+
+    let business_paybill_details: BusinessPayBillInputDetails = BusinessPayBillInputDetails {
+        api_url: api_url,
+        _initiator: _initiator,
+        security_credential: security_credential,
+        command_id: command_id,
+        sender_identifier_type: sender_identifier_type,
+        reciever_identifier_type: reciever_identifier_type,
+        _amount: _amount,
+        party_a: party_a,
+        party_b: party_b,
+        account_reference: account_reference,
+        _requester: _requester,
+        _remarks: _remarks,
+        queue_time_out_url: queue_time_out_url,
+        result_url: result_url,
+    };
+
+    /*
+    println!(
+        "customer_to_business_details: {:?}",
+        &customer_to_business_details
+    );
+    */
+    let mpesa_gateway: MpesaGateway =
+        MpesaGateway::new(consumer_key, consumer_secret, auth_token_url);
+    let xy = mpesa_gateway.get_business_paybill(business_paybill_details);
+    let business_paybill_response_data = xy.await;
+    println!(
+        "business_paybill_response_data: {:?}",
+        &business_paybill_response_data
     );
 
     format!("")
@@ -379,6 +438,425 @@ pub(crate) async fn get_b2c_result(
             "originator_conversation_id: {:?}",
             &originator_conversation_id
         );
+    }
+
+    format!("")
+}
+
+#[post("/c2bpayment/result")]
+pub(crate) async fn get_c2bpayment_result(
+    result_data: web::Json<CustomerToBusinessPaymentResultData>,
+    data: web::Data<Pool>,
+) -> impl Responder {
+    let merchant_request_id = &result_data.Body.stkCallback.MerchantRequestID;
+    let checkout_request_id = &result_data.Body.stkCallback.CheckoutRequestID;
+    let result_code = &result_data.Body.stkCallback.ResultCode;
+    let result_desc = &result_data.Body.stkCallback.ResultDesc;
+    let callback_meta_data = &result_data.Body.stkCallback.CallbackMetadata;
+    /*
+    let item_details = ItemDetails {
+        Name: String::from(""),
+        Value: MixedTypeValue::StringValue(String::from("")),
+    };
+    */
+    let item_details_1 = ItemDetails {
+        Name: String::from("Amount"),
+        Value: MixedTypeValue::FloatValue(150.00),
+    };
+    let item_details_2 = ItemDetails {
+        Name: String::from("MpesaReceiptNumber"),
+        Value: MixedTypeValue::StringValue(String::from("NLJ7RT61SV")),
+    };
+    let mut my_item = Vec::new();
+    my_item.push(item_details_1);
+    my_item.push(item_details_2);
+    let list_of_items = &callback_meta_data.Item;
+    //let list_of_items = &callback_meta_data.Item.as_ref.unwrap_or(&my_item);
+    println!("merchant_request_id: {:?}", &merchant_request_id);
+    println!("checkout_request_id: {:?}", &checkout_request_id);
+    println!("result_code: {:?}", &result_code);
+    println!("result_desc: {:?}", &result_desc);
+    //println!("callback_meta_data: {:?}", &callback_meta_data);
+    //println!("list_of_items: {:?}", &list_of_items);
+
+    let mut transaction_amount: f32 = 0.0;
+    let mut transaction_receipt = String::from("");
+    let mut transaction_date = String::from("");
+    let mut phone_number = String::from("");
+
+    for _item in list_of_items.iter() {
+        let _name = &_item.Name;
+        let _value = &_item.Value;
+
+        // Amount
+        if _name
+            .to_string()
+            .to_lowercase()
+            .eq_ignore_ascii_case(&String::from("Amount"))
+        {
+            transaction_amount = match _value {
+                MixedTypeValue::StringValue(s) => 0.0,
+                MixedTypeValue::IntegerValue(i) => *i as f32,
+                MixedTypeValue::FloatValue(f) => *f,
+                _ => 0.0,
+            }
+        }
+
+        // TransactionReceipt
+        if _name
+            .to_string()
+            .to_lowercase()
+            .eq_ignore_ascii_case(&String::from("MpesaReceiptNumber"))
+        {
+            transaction_receipt = match _value {
+                MixedTypeValue::StringValue(s) => s.to_string(),
+                _ => String::from(""),
+            }
+        }
+
+        //transaction_date
+        if _name
+            .to_string()
+            .to_lowercase()
+            .eq_ignore_ascii_case(&String::from("TransactionDate"))
+        {
+            transaction_date = match _value {
+                MixedTypeValue::FloatValue(f) => f.to_string(),
+                _ => String::from(""),
+            }
+        }
+
+        // phone_number
+        if _name
+            .to_string()
+            .to_lowercase()
+            .eq_ignore_ascii_case(&String::from("PhoneNumber"))
+        {
+            phone_number = match _value {
+                MixedTypeValue::FloatValue(f) => f.to_string(),
+                _ => String::from(""),
+            }
+        }
+    }
+
+    if transaction_receipt.replace(" ", "").trim().len() > 0 {
+        // Lets insert each entry
+        /*
+        create_b2c_result(
+            &data,
+            *result_type,
+            *result_code,
+            result_desc.to_string(),
+            originator_conversation_id.to_string(),
+            conversation_id.to_string(),
+            transaction_id.to_string(),
+            transaction_amount,
+            transaction_receipt.to_string(),
+            b2c_recipient_is_registered_customer.to_string(),
+            b2c_charges_paid_account_available_funds,
+            receiver_party_public_name.to_string(),
+            transaction_completed_date_time.to_string(),
+            b2c_utility_account_available_funds,
+            b2c_working_account_available_funds,
+            queue_timeout_url.to_string(),
+        );
+        */
+        println!("transaction_receipt: {:?}", &transaction_receipt);
+        println!("transaction_amount: {:?}", &transaction_amount);
+        println!("transaction_date: {:?}", &transaction_date);
+        println!("phone_number: {:?}", &phone_number);
+    }
+
+    format!("")
+}
+
+#[post("/businesspaybill/result")]
+pub(crate) async fn get_business_paybill_result(
+    result_data: web::Json<BusinessPayBillResultData>,
+    data: web::Data<Pool>,
+) -> impl Responder {
+    let result_type = &result_data.Result.ResultType;
+    let result_code = &result_data.Result.ResultCode;
+    let result_desc = &result_data.Result.ResultDesc;
+    let originator_conversation_id = &result_data.Result.OriginatorConversationID;
+    let conversation_id = &result_data.Result.ConversationID;
+    let transaction_id = &result_data.Result.TransactionID;
+    let result_parameters = &result_data.Result.ResultParameters;
+    let mut debit_account_balance = String::from("");
+    let mut transaction_amount = String::from("");
+    let mut debit_party_affected_account_balance = String::from("");
+    let mut trans_completed_time = String::from("");
+    let mut debit_party_charges = String::from("");
+    let mut receiver_party_public_name = String::from("");
+    let mut _currency = String::from("");
+    let mut initiator_account_current_balance = String::from("");
+    let mut bill_reference_number = String::from("");
+    let mut queue_timeout_url = String::from("");
+
+    for result_parameter in result_parameters.ResultParameter.iter() {
+        let _key = &result_parameter.Key;
+        let _value = &result_parameter.Value;
+
+        // DebitAccountBalance
+        if _key
+            .to_string()
+            .to_lowercase()
+            .eq_ignore_ascii_case(&String::from("DebitAccountBalance"))
+        {
+            debit_account_balance = match _value {
+                MixedTypeValue::StringValue(s) => s.to_string(),
+                _ => String::from(""),
+            }
+        }
+
+        // Amount
+        if _key
+            .to_string()
+            .to_lowercase()
+            .eq_ignore_ascii_case(&String::from("Amount"))
+        {
+            transaction_amount = match _value {
+                MixedTypeValue::StringValue(s) => s.to_string(),
+                _ => String::from(""),
+            }
+        }
+
+        // DebitPartyAffectedAccountBalance
+        if _key
+            .to_string()
+            .to_lowercase()
+            .eq_ignore_ascii_case(&String::from("DebitPartyAffectedAccountBalance"))
+        {
+            debit_party_affected_account_balance = match _value {
+                MixedTypeValue::StringValue(s) => s.to_string(),
+                _ => String::from(""),
+            }
+        }
+
+        // TransCompletedTime
+        if _key
+            .to_string()
+            .to_lowercase()
+            .eq_ignore_ascii_case(&String::from("TransCompletedTime"))
+        {
+            trans_completed_time = match _value {
+                MixedTypeValue::StringValue(s) => s.to_string(),
+                _ => String::from(""),
+            }
+        }
+
+        // DebitPartyCharges
+        if _key
+            .to_string()
+            .to_lowercase()
+            .eq_ignore_ascii_case(&String::from("DebitPartyCharges"))
+        {
+            debit_party_charges = match _value {
+                MixedTypeValue::StringValue(s) => s.to_string(),
+                _ => String::from(""),
+            }
+        }
+
+        // ReceiverPartyPublicName
+        if _key
+            .to_string()
+            .to_lowercase()
+            .eq_ignore_ascii_case(&String::from("ReceiverPartyPublicName"))
+        {
+            receiver_party_public_name = match _value {
+                MixedTypeValue::StringValue(s) => s.to_string(),
+                _ => String::from(""),
+            }
+        }
+
+        // Currency
+        if _key
+            .to_string()
+            .to_lowercase()
+            .eq_ignore_ascii_case(&String::from("Currency"))
+        {
+            _currency = match _value {
+                MixedTypeValue::StringValue(s) => s.to_string(),
+                _ => String::from(""),
+            }
+        }
+
+        // InitiatorAccountCurrentBalance
+        if _key
+            .to_string()
+            .to_lowercase()
+            .eq_ignore_ascii_case(&String::from("InitiatorAccountCurrentBalance"))
+        {
+            initiator_account_current_balance = match _value {
+                MixedTypeValue::StringValue(s) => s.to_string(),
+                _ => String::from(""),
+            }
+        }
+    }
+
+    for reference_item in result_data.Result.ReferenceData.ReferenceItem.iter() {
+        let _key = &reference_item.Key;
+        let _value = &reference_item.Value;
+
+        // BillReferenceNumber
+        if _key
+            .to_string()
+            .to_lowercase()
+            .eq_ignore_ascii_case(&String::from("BillReferenceNumber"))
+        {
+            bill_reference_number = match _value {
+                MixedTypeValue::StringValue(s) => s.to_string(),
+                _ => String::from(""),
+            }
+        }
+
+        // QueueTimeoutURL
+        if _key
+            .to_string()
+            .to_lowercase()
+            .eq_ignore_ascii_case(&String::from("QueueTimeoutURL"))
+        {
+            queue_timeout_url = match _value {
+                MixedTypeValue::StringValue(s) => s.to_string(),
+                _ => String::from(""),
+            }
+        }
+    }
+
+    if bill_reference_number.replace(" ", "").trim().len() > 0 {
+        // Lets insert each entry
+        /*
+        create_b2c_result(
+            &data,
+            *result_type,
+            *result_code,
+            result_desc.to_string(),
+            originator_conversation_id.to_string(),
+            conversation_id.to_string(),
+            transaction_id.to_string(),
+            transaction_amount,
+            transaction_receipt.to_string(),
+            b2c_recipient_is_registered_customer.to_string(),
+            b2c_charges_paid_account_available_funds,
+            receiver_party_public_name.to_string(),
+            transaction_completed_date_time.to_string(),
+            b2c_utility_account_available_funds,
+            b2c_working_account_available_funds,
+            queue_timeout_url.to_string(),
+        );
+        */
+        println!("result_type: {:?}", &result_type);
+        println!("result_code: {:?}", &result_code);
+        println!("result_desc: {:?}", &result_desc);
+        println!(
+            "originator_conversation_id: {:?}",
+            &originator_conversation_id
+        );
+        println!("conversation_id: {:?}", &conversation_id);
+        println!("transaction_id: {:?}", &transaction_id);
+        println!("debit_account_balance: {:?}", &debit_account_balance);
+        println!("transaction_amount: {:?}", &transaction_amount);
+        println!(
+            "debit_party_affected_account_balance: {:?}",
+            &debit_party_affected_account_balance
+        );
+        println!("trans_completed_time: {:?}", &trans_completed_time);
+        println!("debit_party_charges: {:?}", &debit_party_charges);
+        println!(
+            "receiver_party_public_name: {:?}",
+            &receiver_party_public_name
+        );
+        println!("_currency: {:?}", &_currency);
+        println!(
+            "initiator_account_current_balance: {:?}",
+            &initiator_account_current_balance
+        );
+        println!("bill_reference_number: {:?}", &bill_reference_number);
+        println!("queue_timeout_url: {:?}", &queue_timeout_url);
+    }
+
+    format!("")
+}
+
+#[post("/businesspaybill/timeout")]
+pub(crate) async fn get_business_paybill_timeout(
+    result_data: web::Json<BusinessPayBillFailedData>,
+    data: web::Data<Pool>,
+) -> impl Responder {
+    let result_type = &result_data.Result.ResultType;
+    let result_code = &result_data.Result.ResultCode;
+    let result_desc = &result_data.Result.ResultDesc;
+    let originator_conversation_id = &result_data.Result.OriginatorConversationID;
+    let conversation_id = &result_data.Result.ConversationID;
+    let transaction_id = &result_data.Result.TransactionID;
+    let result_parameter = &result_data.Result.ResultParameters;
+    let reference_data = &result_data.Result.ReferenceData.ReferenceItem;
+    let mut bo_completed_time = String::from("");
+    let mut queue_timeout_url = String::from("");
+
+    let result_parameter_key = &result_parameter.ResultParameter.Key;
+    let result_parameter_value = &result_parameter.ResultParameter.Value;
+
+    let reference_data_key = &reference_data.Key;
+    let reference_data_value = &reference_data.Value;
+
+    // BOCompletedTime
+    if result_parameter_key
+        .to_string()
+        .to_lowercase()
+        .eq_ignore_ascii_case(&String::from("BOCompletedTime"))
+    {
+        bo_completed_time = match result_parameter_value {
+            MixedTypeValue::FloatValue(s) => s.to_string(),
+            _ => String::from(""),
+        }
+    }
+
+    // QueueTimeoutURL
+    if reference_data_key
+        .to_string()
+        .to_lowercase()
+        .eq_ignore_ascii_case(&String::from("QueueTimeoutURL"))
+    {
+        queue_timeout_url = match reference_data_value {
+            s => s.to_string(),
+            _ => String::from(""),
+        }
+    }
+
+    if originator_conversation_id.replace(" ", "").trim().len() > 0 {
+        // Lets insert each entry
+        /*
+        create_b2c_result(
+            &data,
+            *result_type,
+            *result_code,
+            result_desc.to_string(),
+            originator_conversation_id.to_string(),
+            conversation_id.to_string(),
+            transaction_id.to_string(),
+            transaction_amount,
+            transaction_receipt.to_string(),
+            b2c_recipient_is_registered_customer.to_string(),
+            b2c_charges_paid_account_available_funds,
+            receiver_party_public_name.to_string(),
+            transaction_completed_date_time.to_string(),
+            b2c_utility_account_available_funds,
+            b2c_working_account_available_funds,
+            queue_timeout_url.to_string(),
+        );
+        */
+        println!("result_type: {:?}", &result_type);
+        println!("result_code: {:?}", &result_code);
+        println!("result_desc: {:?}", &result_desc);
+        println!(
+            "originator_conversation_id: {:?}",
+            &originator_conversation_id
+        );
+        println!("conversation_id: {:?}", &conversation_id);
+        println!("transaction_id: {:?}", &transaction_id);
+        println!("bo_completed_time: {:?}", &bo_completed_time);
+        println!("queue_timeout_url: {:?}", &queue_timeout_url);
     }
 
     format!("")

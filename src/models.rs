@@ -1,3 +1,4 @@
+use chrono::{DateTime, Local};
 use serde::{Deserialize, Serialize};
 
 #[derive(Serialize)]
@@ -47,6 +48,23 @@ pub struct CustomerToBusinessPaymentData {
     pub CallBackURL: String,
     pub AccountReference: String,
     pub TransactionDesc: String,
+}
+
+#[derive(Serialize, Debug)]
+pub struct BusinessPayBillData {
+    pub Initiator: String,
+    pub SecurityCredential: String,
+    pub CommandID: String,
+    pub SenderIdentifierType: String,
+    pub RecieverIdentifierType: String,
+    pub Amount: u32,
+    pub PartyA: String,
+    pub PartyB: String,
+    pub AccountReference: String,
+    pub Requester: String,
+    pub Remarks: String,
+    pub QueueTimeOutURL: String,
+    pub ResultURL: String,
 }
 
 #[derive(Deserialize)]
@@ -173,6 +191,101 @@ pub struct CustomerToBusinessPaymentErrorResponseData {
     pub errorMessage: Option<String>,
 }
 
+#[derive(Deserialize, Debug)]
+pub struct ItemDetails {
+    pub Name: String,
+    pub Value: MixedTypeValue,
+}
+
+#[derive(Deserialize, Debug)]
+pub struct Item {
+    pub Item: Vec<ItemDetails>,
+}
+
+#[derive(Deserialize, Debug)]
+pub struct CustomerToBusinessPaymentResultDetails {
+    pub MerchantRequestID: String,
+    pub CheckoutRequestID: String,
+    pub ResultCode: u32,
+    pub ResultDesc: String,
+    pub CallbackMetadata: Item,
+}
+
+#[derive(Deserialize, Debug)]
+pub struct CustomerToBusinessPaymentStkCallBackData {
+    pub stkCallback: CustomerToBusinessPaymentResultDetails,
+}
+
+#[derive(Deserialize, Debug)]
+pub struct CustomerToBusinessPaymentResultData {
+    pub Body: CustomerToBusinessPaymentStkCallBackData,
+}
+
+#[derive(Deserialize, Debug)]
+pub struct BusinessPayBillResponseData {
+    pub OriginatorConversationID: Option<String>,
+    pub ConversationID: Option<String>,
+    pub ResponseCode: Option<String>,
+    pub ResponseDescription: Option<String>,
+}
+
+#[derive(Deserialize, Debug)]
+pub struct BusinessPayBillErrorResponseData {
+    pub requestId: Option<String>,
+    pub errorCode: Option<String>,
+    pub errorMessage: Option<String>,
+}
+
+#[derive(Deserialize, Debug)]
+pub struct BusinessPayBillReferenceItemDetails {
+    pub Key: String,
+    pub Value: MixedTypeValue,
+}
+
+#[derive(Deserialize, Debug)]
+pub struct BusinessPayBillReferenceItem {
+    pub ReferenceItem: Vec<BusinessPayBillReferenceItemDetails>,
+}
+
+#[derive(Deserialize, Debug)]
+pub struct BusinessPayBillResultDetails {
+    pub ResultType: String,
+    pub ResultCode: String,
+    pub ResultDesc: String,
+    pub OriginatorConversationID: String,
+    pub ConversationID: String,
+    pub TransactionID: String,
+    pub ResultParameters: ResultParameter,
+    pub ReferenceData: BusinessPayBillReferenceItem,
+}
+
+#[derive(Deserialize, Debug)]
+pub struct BusinessPayBillResultData {
+    pub Result: BusinessPayBillResultDetails,
+}
+
+#[derive(Deserialize, Debug)]
+pub struct BusinessPayBillFailedResultParameter {
+    pub ResultParameter: ResultParameterDetails,
+}
+
+#[derive(Deserialize, Debug)]
+pub struct BusinessPayBillFailedDetails {
+    pub ResultType: u8,
+    pub ResultCode: u32,
+    pub ResultDesc: String,
+    pub OriginatorConversationID: String,
+    pub ConversationID: String,
+    pub TransactionID: String,
+    pub ResultParameters: BusinessPayBillFailedResultParameter,
+    pub ReferenceData: ReferenceItem,
+}
+
+#[derive(Deserialize, Debug)]
+pub struct BusinessPayBillFailedData {
+    pub Result: BusinessPayBillFailedDetails,
+}
+
 // This struct holds  Register Url processing data
 pub struct RegisterUrlInputDetails {
     //pub access_token: String,
@@ -213,4 +326,22 @@ pub struct CustomerToBusinessPaymentInputDetails {
     pub call_back_url: String,
     pub account_reference: String,
     pub transaction_desc: String,
+}
+
+#[derive(Debug)]
+pub struct BusinessPayBillInputDetails {
+    pub api_url: String,
+    pub _initiator: String,
+    pub security_credential: String,
+    pub command_id: String,
+    pub sender_identifier_type: String,
+    pub reciever_identifier_type: String,
+    pub _amount: u32,
+    pub party_a: String,
+    pub party_b: String,
+    pub account_reference: String,
+    pub _requester: String,
+    pub _remarks: String,
+    pub queue_time_out_url: String,
+    pub result_url: String,
 }

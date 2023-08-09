@@ -11,8 +11,10 @@ use reqwest::StatusCode;
 use serde::{Deserialize, Serialize};
 
 use crate::models::{
-    AuthTokenResponseData, BusinessToCustomerData, BusinessToCustomerErrorResponseData,
-    BusinessToCustomerInputDetails, BusinessToCustomerResponseData, CustomerToBusinessPaymentData,
+    AuthTokenResponseData, BusinessPayBillData, BusinessPayBillErrorResponseData,
+    BusinessPayBillInputDetails, BusinessPayBillResponseData, BusinessToCustomerData,
+    BusinessToCustomerErrorResponseData, BusinessToCustomerInputDetails,
+    BusinessToCustomerResponseData, CustomerToBusinessPaymentData,
     CustomerToBusinessPaymentErrorResponseData, CustomerToBusinessPaymentInputDetails,
     CustomerToBusinessPaymentResponseData, RegisterUrlData, RegisterUrlInputDetails,
     RegisterUrlResponseData,
@@ -256,6 +258,51 @@ impl MpesaGateway {
             };
 
         customer_to_business_response_data
+    }
+
+    pub async fn get_business_paybill(
+        &self,
+        business_paybill_details: BusinessPayBillInputDetails,
+    ) -> BusinessPayBillResponseData {
+        let xy = self.get_auth_token();
+        let access_token: String = xy.await;
+        //println!("access_token: {:?}", &access_token);
+
+        if access_token.is_empty() || business_paybill_details.api_url.is_empty() {
+            /*
+            println!("access_token: {:?}", &access_token);
+            println!(
+                "business_paybill_details: {:?}",
+                &business_paybill_details
+            );
+            */
+            println!("access_token or business_paybill_details is empty");
+            let b = BusinessPayBillResponseData {
+                OriginatorConversationID: None,
+                ConversationID: None,
+                ResponseCode: None,
+                ResponseDescription: None,
+            };
+            return b;
+        }
+
+        let _result = business_paybill(business_paybill_details, access_token).await;
+
+        let business_paybill_response_data: BusinessPayBillResponseData = match _result {
+            Ok(a) => a,
+            Err(e) => {
+                let b = BusinessPayBillResponseData {
+                    OriginatorConversationID: None,
+                    ConversationID: None,
+                    ResponseCode: None,
+                    ResponseDescription: None,
+                };
+
+                b
+            }
+        };
+
+        business_paybill_response_data
     }
 }
 
@@ -728,4 +775,174 @@ pub async fn customer_to_business_payment(
     };
 
     Ok(customer_to_business_response_data)
+}
+
+pub async fn business_paybill(
+    business_paybill_details: BusinessPayBillInputDetails,
+    access_token: String,
+) -> std::result::Result<BusinessPayBillResponseData, reqwest::Error> {
+    let api_url: String = business_paybill_details.api_url;
+    let _initiator: String = business_paybill_details._initiator;
+    let security_credential: String = business_paybill_details.security_credential;
+    let command_id: String = business_paybill_details.command_id;
+    let sender_identifier_type: String = business_paybill_details.sender_identifier_type;
+    let reciever_identifier_type: String = business_paybill_details.reciever_identifier_type;
+    let _amount: u32 = business_paybill_details._amount;
+    let party_a: String = business_paybill_details.party_a;
+    let party_b: String = business_paybill_details.party_b;
+    let account_reference: String = business_paybill_details.account_reference;
+    let _requester: String = business_paybill_details._requester;
+    let _remarks: String = business_paybill_details._remarks;
+    let queue_time_out_url: String = business_paybill_details.queue_time_out_url;
+    let result_url: String = business_paybill_details.result_url;
+
+    let business_paybill_data = BusinessPayBillData {
+        Initiator: _initiator,
+        SecurityCredential: security_credential,
+        CommandID: command_id,
+        SenderIdentifierType: sender_identifier_type,
+        RecieverIdentifierType: reciever_identifier_type,
+        Amount: _amount,
+        PartyA: party_a,
+        PartyB: party_b,
+        AccountReference: account_reference,
+        Requester: _requester,
+        Remarks: _remarks,
+        QueueTimeOutURL: queue_time_out_url,
+        ResultURL: result_url,
+    };
+
+    let mut business_paybill_response_data = BusinessPayBillResponseData {
+        OriginatorConversationID: None,
+        ConversationID: None,
+        ResponseCode: None,
+        ResponseDescription: None,
+    };
+
+    /*
+    println!("access_token: {:?}", &access_token);
+    println!("api_url: {:?}", &api_url);
+    println!(
+        "customer_to_business_data: {:?}",
+        &customer_to_business_data
+    );
+    */
+    let client = reqwest::Client::new();
+    // "%Y-%m-%d %H:%M:%S" i.e "yyyy-MM-dd HH:mm:ss"
+    // "%Y-%m-%d %H:%M:%S%.3f" i.e "yyyy-MM-dd HH:mm:ss.SSS"
+    //let date_to_mpesa = Local::now().format("%Y-%m-%d %H:%M:%S%.3f").to_string();
+    let res = client
+        .post(api_url)
+        .header(CONTENT_TYPE, "application/json")
+        .header(ACCEPT, "application/json")
+        .header("Authorization", access_token)
+        .json(&business_paybill_data)
+        .send()
+        //.await?; //The "?" after the await returns errors immediately and hence will not be captured on match clause below
+        .await;
+
+    match res {
+        Err(e) => {
+            //println!("server not responding");
+            println!("server not responding: {:?}", e.to_string());
+        }
+        Ok(response) => {
+            match response.status() {
+                StatusCode::OK => {
+                    let date_from_mpesa = Local::now().format("%Y-%m-%d %H:%M:%S%.3f").to_string();
+                    let k = String::from(""); //Default value.
+                    let m: u32 = 0; //Default value.
+
+                    let my_output = response.json::<BusinessPayBillResponseData>().await?;
+
+                    let originator_conversation_id =
+                        &my_output.OriginatorConversationID.as_ref().unwrap_or(&k);
+                    let conversation_id = &my_output.ConversationID.as_ref().unwrap_or(&k);
+                    let response_code = &my_output.ResponseCode.as_ref().unwrap_or(&k);
+                    let response_description =
+                        &my_output.ResponseDescription.as_ref().unwrap_or(&k);
+
+                    //
+                    business_paybill_response_data.OriginatorConversationID =
+                        Some(originator_conversation_id.to_string());
+                    business_paybill_response_data.ConversationID =
+                        Some(conversation_id.to_string());
+                    business_paybill_response_data.ResponseCode = Some(response_code.to_string());
+                    business_paybill_response_data.ResponseDescription =
+                        Some(response_description.to_string());
+                    /*
+                    println!(
+                        "business_to_customer_response_data: {:?}",
+                        &business_to_customer_response_data
+                    );
+                    */
+
+                    /*
+                    create_b2c_acknowledgement(
+                        &data,
+                        originator_conversation_id.to_string(),
+                        conversation_id.to_string(),
+                        response_code.to_string(),
+                        response_description.to_string(),
+                        business_to_customer_data.CommandID,
+                        business_to_customer_data.PartyA,
+                        business_to_customer_data.PartyB,
+                        business_to_customer_data.Amount,
+                        request_id,
+                        error_code,
+                        error_message,
+                        date_to_mpesa,
+                        date_from_mpesa,
+                    );
+                    */
+                }
+                s => {
+                    let date_from_mpesa = Local::now().format("%Y-%m-%d %H:%M:%S%.3f").to_string();
+                    let k = String::from(""); //Default value.
+                    let m: u32 = 0; //Default value.
+                    let my_output = response.json::<BusinessPayBillErrorResponseData>().await?;
+
+                    let request_id = &my_output.requestId.as_ref().unwrap_or(&k);
+                    let error_code = &my_output.errorCode.as_ref().unwrap_or(&k);
+                    let error_message = &my_output.errorMessage.as_ref().unwrap_or(&k);
+
+                    let originator_conversation_id = request_id.to_string();
+                    let conversation_id = String::from("");
+                    let response_code = error_code.to_string();
+                    let response_description = error_message.to_string();
+
+                    business_paybill_response_data.OriginatorConversationID =
+                        Some(originator_conversation_id.to_string());
+                    business_paybill_response_data.ConversationID =
+                        Some(conversation_id.to_string());
+                    business_paybill_response_data.ResponseCode = Some(response_code.to_string());
+                    business_paybill_response_data.ResponseDescription =
+                        Some(response_description.to_string());
+
+                    //println!("my_output: {:?}", &my_output);
+
+                    /*
+                    create_b2c_acknowledgement(
+                        &data,
+                        originator_conversation_id.to_string(),
+                        conversation_id.to_string(),
+                        response_code.to_string(),
+                        response_description.to_string(),
+                        business_to_customer_data.CommandID,
+                        business_to_customer_data.PartyA,
+                        business_to_customer_data.PartyB,
+                        business_to_customer_data.Amount,
+                        request_id.to_string(),
+                        error_code.to_string(),
+                        error_message.to_string(),
+                        date_to_mpesa,
+                        date_from_mpesa,
+                    );
+                    */
+                }
+            }
+        }
+    };
+
+    Ok(business_paybill_response_data)
 }
