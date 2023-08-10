@@ -67,6 +67,23 @@ pub struct BusinessPayBillData {
     pub ResultURL: String,
 }
 
+#[derive(Serialize, Debug)]
+pub struct BusinessBuyGoodsData {
+    pub Initiator: String,
+    pub SecurityCredential: String,
+    pub CommandID: String,
+    pub SenderIdentifierType: String,
+    pub RecieverIdentifierType: String,
+    pub Amount: u32,
+    pub PartyA: String,
+    pub PartyB: String,
+    pub AccountReference: String,
+    pub Requester: String,
+    pub Remarks: String,
+    pub QueueTimeOutURL: String,
+    pub ResultURL: String,
+}
+
 #[derive(Deserialize)]
 pub struct C2bData {
     pub TransactionType: String,
@@ -237,6 +254,23 @@ pub struct BusinessPayBillErrorResponseData {
 }
 
 #[derive(Deserialize, Debug)]
+pub struct BusinessBuyGoodsResponseData {
+    pub OriginatorConversationID: Option<String>,
+    pub ConversationID: Option<String>,
+    pub ResponseCode: Option<String>,
+    pub ResponseDescription: Option<String>,
+}
+
+#[derive(Deserialize, Debug)]
+pub struct BusinessBuyGoodsErrorResponseData {
+    pub requestId: Option<String>,
+    pub errorCode: Option<String>,
+    pub errorMessage: Option<String>,
+}
+
+// BusinessPayBill
+
+#[derive(Deserialize, Debug)]
 pub struct BusinessPayBillReferenceItemDetails {
     pub Key: String,
     pub Value: MixedTypeValue,
@@ -286,6 +320,58 @@ pub struct BusinessPayBillFailedData {
     pub Result: BusinessPayBillFailedDetails,
 }
 
+// BusinessBuyGoods
+
+#[derive(Deserialize, Debug)]
+pub struct BusinessBuyGoodsReferenceItemDetails {
+    pub Key: String,
+    pub Value: MixedTypeValue,
+}
+
+#[derive(Deserialize, Debug)]
+pub struct BusinessBuyGoodsReferenceItem {
+    pub ReferenceItem: Vec<BusinessBuyGoodsReferenceItemDetails>,
+}
+
+#[derive(Deserialize, Debug)]
+pub struct BusinessBuyGoodsResultDetails {
+    pub ResultType: String,
+    pub ResultCode: String,
+    pub ResultDesc: String,
+    pub OriginatorConversationID: String,
+    pub ConversationID: String,
+    pub TransactionID: String,
+    pub ResultParameters: ResultParameter,
+    pub ReferenceData: BusinessBuyGoodsReferenceItem,
+}
+
+#[derive(Deserialize, Debug)]
+pub struct BusinessBuyGoodsResultData {
+    pub Result: BusinessBuyGoodsResultDetails,
+}
+
+#[derive(Deserialize, Debug)]
+pub struct BusinessBuyGoodsFailedResultParameter {
+    pub ResultParameter: ResultParameterDetails,
+}
+
+#[derive(Deserialize, Debug)]
+pub struct BusinessBuyGoodsFailedDetails {
+    pub ResultType: u8,
+    pub ResultCode: u32,
+    pub ResultDesc: String,
+    pub OriginatorConversationID: String,
+    pub ConversationID: String,
+    pub TransactionID: String,
+    pub ResultParameters: BusinessBuyGoodsFailedResultParameter,
+    pub ReferenceData: ReferenceItem,
+}
+
+#[derive(Deserialize, Debug)]
+pub struct BusinessBuyGoodsFailedData {
+    pub Result: BusinessBuyGoodsFailedDetails,
+}
+
 // This struct holds  Register Url processing data
 pub struct RegisterUrlInputDetails {
     //pub access_token: String,
@@ -314,7 +400,7 @@ pub struct BusinessToCustomerInputDetails {
 
 #[derive(Debug)]
 pub struct CustomerToBusinessPaymentInputDetails {
-    pub api_url: String,
+    //pub api_url: String,
     pub business_short_code: String,
     pub _password: String,
     pub time_stamp: String,
@@ -330,7 +416,25 @@ pub struct CustomerToBusinessPaymentInputDetails {
 
 #[derive(Debug)]
 pub struct BusinessPayBillInputDetails {
-    pub api_url: String,
+    //pub api_url: String,
+    pub _initiator: String,
+    pub security_credential: String,
+    pub command_id: String,
+    pub sender_identifier_type: String,
+    pub reciever_identifier_type: String,
+    pub _amount: u32,
+    pub party_a: String,
+    pub party_b: String,
+    pub account_reference: String,
+    pub _requester: String,
+    pub _remarks: String,
+    pub queue_time_out_url: String,
+    pub result_url: String,
+}
+
+#[derive(Debug)]
+pub struct BusinessBuyGoodsInputDetails {
+    //pub api_url: String,
     pub _initiator: String,
     pub security_credential: String,
     pub command_id: String,

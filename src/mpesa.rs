@@ -11,9 +11,10 @@ use reqwest::StatusCode;
 use serde::{Deserialize, Serialize};
 
 use crate::models::{
-    AuthTokenResponseData, BusinessPayBillData, BusinessPayBillErrorResponseData,
-    BusinessPayBillInputDetails, BusinessPayBillResponseData, BusinessToCustomerData,
-    BusinessToCustomerErrorResponseData, BusinessToCustomerInputDetails,
+    AuthTokenResponseData, BusinessBuyGoodsData, BusinessBuyGoodsErrorResponseData,
+    BusinessBuyGoodsInputDetails, BusinessBuyGoodsResponseData, BusinessPayBillData,
+    BusinessPayBillErrorResponseData, BusinessPayBillInputDetails, BusinessPayBillResponseData,
+    BusinessToCustomerData, BusinessToCustomerErrorResponseData, BusinessToCustomerInputDetails,
     BusinessToCustomerResponseData, CustomerToBusinessPaymentData,
     CustomerToBusinessPaymentErrorResponseData, CustomerToBusinessPaymentInputDetails,
     CustomerToBusinessPaymentResponseData, RegisterUrlData, RegisterUrlInputDetails,
@@ -27,14 +28,24 @@ pub struct MpesaGateway {
     consumer_key: String,
     consumer_secret: String,
     auth_token_url: String,
+    stk_push_url: String,
+    b2b_payment_request_url: String,
 }
 
 impl MpesaGateway {
-    pub fn new(consumer_key: String, consumer_secret: String, auth_token_url: String) -> Self {
+    pub fn new(
+        consumer_key: String,
+        consumer_secret: String,
+        auth_token_url: String,
+        stk_push_url: String,
+        b2b_payment_request_url: String,
+    ) -> Self {
         Self {
             consumer_key: consumer_key,
             consumer_secret: consumer_secret,
             auth_token_url: auth_token_url,
+            stk_push_url: stk_push_url,
+            b2b_payment_request_url: b2b_payment_request_url,
         }
     }
 
@@ -217,9 +228,10 @@ impl MpesaGateway {
     ) -> CustomerToBusinessPaymentResponseData {
         let xy = self.get_auth_token();
         let access_token: String = xy.await;
+        let api_url = &self.stk_push_url;
         //println!("access_token: {:?}", &access_token);
 
-        if access_token.is_empty() || customer_to_business_details.api_url.is_empty() {
+        if access_token.is_empty() || api_url.is_empty() {
             /*
             println!("access_token: {:?}", &access_token);
             println!(
@@ -227,7 +239,7 @@ impl MpesaGateway {
                 &customer_to_business_details
             );
             */
-            println!("access_token or customer_to_business_details is empty");
+            println!("access_token or api_url is empty");
             let b = CustomerToBusinessPaymentResponseData {
                 MerchantRequestID: None,
                 CheckoutRequestID: None,
@@ -238,8 +250,12 @@ impl MpesaGateway {
             return b;
         }
 
-        let _result =
-            customer_to_business_payment(customer_to_business_details, access_token).await;
+        let _result = customer_to_business_payment(
+            customer_to_business_details,
+            access_token,
+            api_url.to_string(),
+        )
+        .await;
 
         let customer_to_business_response_data: CustomerToBusinessPaymentResponseData =
             match _result {
@@ -266,9 +282,10 @@ impl MpesaGateway {
     ) -> BusinessPayBillResponseData {
         let xy = self.get_auth_token();
         let access_token: String = xy.await;
+        let api_url = &self.b2b_payment_request_url;
         //println!("access_token: {:?}", &access_token);
 
-        if access_token.is_empty() || business_paybill_details.api_url.is_empty() {
+        if access_token.is_empty() || api_url.is_empty() {
             /*
             println!("access_token: {:?}", &access_token);
             println!(
@@ -276,7 +293,7 @@ impl MpesaGateway {
                 &business_paybill_details
             );
             */
-            println!("access_token or business_paybill_details is empty");
+            println!("access_token or api_url is empty");
             let b = BusinessPayBillResponseData {
                 OriginatorConversationID: None,
                 ConversationID: None,
@@ -286,7 +303,8 @@ impl MpesaGateway {
             return b;
         }
 
-        let _result = business_paybill(business_paybill_details, access_token).await;
+        let _result =
+            business_paybill(business_paybill_details, access_token, api_url.to_string()).await;
 
         let business_paybill_response_data: BusinessPayBillResponseData = match _result {
             Ok(a) => a,
@@ -303,6 +321,57 @@ impl MpesaGateway {
         };
 
         business_paybill_response_data
+    }
+
+    pub async fn get_business_buy_goods(
+        &self,
+        business_buy_goods_details: BusinessBuyGoodsInputDetails,
+    ) -> BusinessBuyGoodsResponseData {
+        let xy = self.get_auth_token();
+        let access_token: String = xy.await;
+        let api_url = &self.b2b_payment_request_url;
+        //println!("access_token: {:?}", &access_token);
+
+        if access_token.is_empty() || api_url.is_empty() {
+            /*
+            println!("access_token: {:?}", &access_token);
+            println!(
+                "business_buy_goods_details: {:?}",
+                &business_buy_goods_details
+            );
+            */
+            println!("access_token or api_url is empty");
+            let b = BusinessBuyGoodsResponseData {
+                OriginatorConversationID: None,
+                ConversationID: None,
+                ResponseCode: None,
+                ResponseDescription: None,
+            };
+            return b;
+        }
+
+        let _result = business_buy_goods(
+            business_buy_goods_details,
+            access_token,
+            api_url.to_string(),
+        )
+        .await;
+
+        let business_buy_goods_response_data: BusinessBuyGoodsResponseData = match _result {
+            Ok(a) => a,
+            Err(e) => {
+                let b = BusinessBuyGoodsResponseData {
+                    OriginatorConversationID: None,
+                    ConversationID: None,
+                    ResponseCode: None,
+                    ResponseDescription: None,
+                };
+
+                b
+            }
+        };
+
+        business_buy_goods_response_data
     }
 }
 
@@ -604,8 +673,9 @@ pub async fn business_to_customer(
 pub async fn customer_to_business_payment(
     customer_to_business_payment_details: CustomerToBusinessPaymentInputDetails,
     access_token: String,
+    api_url: String,
 ) -> std::result::Result<CustomerToBusinessPaymentResponseData, reqwest::Error> {
-    let api_url: String = customer_to_business_payment_details.api_url;
+    //let api_url: String = customer_to_business_payment_details.api_url;
     let business_short_code: String = customer_to_business_payment_details.business_short_code;
     let _password: String = customer_to_business_payment_details._password;
     let time_stamp: String = customer_to_business_payment_details.time_stamp;
@@ -780,8 +850,9 @@ pub async fn customer_to_business_payment(
 pub async fn business_paybill(
     business_paybill_details: BusinessPayBillInputDetails,
     access_token: String,
+    api_url: String,
 ) -> std::result::Result<BusinessPayBillResponseData, reqwest::Error> {
-    let api_url: String = business_paybill_details.api_url;
+    //let api_url: String = business_paybill_details.api_url;
     let _initiator: String = business_paybill_details._initiator;
     let security_credential: String = business_paybill_details.security_credential;
     let command_id: String = business_paybill_details.command_id;
@@ -945,4 +1016,175 @@ pub async fn business_paybill(
     };
 
     Ok(business_paybill_response_data)
+}
+
+async fn business_buy_goods(
+    business_buy_goods_details: BusinessBuyGoodsInputDetails,
+    access_token: String,
+    api_url: String,
+) -> std::result::Result<BusinessBuyGoodsResponseData, reqwest::Error> {
+    //let api_url: String = business_buy_goods_details.api_url;
+    let _initiator: String = business_buy_goods_details._initiator;
+    let security_credential: String = business_buy_goods_details.security_credential;
+    let command_id: String = business_buy_goods_details.command_id;
+    let sender_identifier_type: String = business_buy_goods_details.sender_identifier_type;
+    let reciever_identifier_type: String = business_buy_goods_details.reciever_identifier_type;
+    let _amount: u32 = business_buy_goods_details._amount;
+    let party_a: String = business_buy_goods_details.party_a;
+    let party_b: String = business_buy_goods_details.party_b;
+    let account_reference: String = business_buy_goods_details.account_reference;
+    let _requester: String = business_buy_goods_details._requester;
+    let _remarks: String = business_buy_goods_details._remarks;
+    let queue_time_out_url: String = business_buy_goods_details.queue_time_out_url;
+    let result_url: String = business_buy_goods_details.result_url;
+
+    let business_buy_goods_data = BusinessBuyGoodsData {
+        Initiator: _initiator,
+        SecurityCredential: security_credential,
+        CommandID: command_id,
+        SenderIdentifierType: sender_identifier_type,
+        RecieverIdentifierType: reciever_identifier_type,
+        Amount: _amount,
+        PartyA: party_a,
+        PartyB: party_b,
+        AccountReference: account_reference,
+        Requester: _requester,
+        Remarks: _remarks,
+        QueueTimeOutURL: queue_time_out_url,
+        ResultURL: result_url,
+    };
+
+    let mut business_buy_goods_response_data = BusinessBuyGoodsResponseData {
+        OriginatorConversationID: None,
+        ConversationID: None,
+        ResponseCode: None,
+        ResponseDescription: None,
+    };
+
+    /*
+    println!("access_token: {:?}", &access_token);
+    println!("api_url: {:?}", &api_url);
+    println!(
+        "customer_to_business_data: {:?}",
+        &customer_to_business_data
+    );
+    */
+    let client = reqwest::Client::new();
+    // "%Y-%m-%d %H:%M:%S" i.e "yyyy-MM-dd HH:mm:ss"
+    // "%Y-%m-%d %H:%M:%S%.3f" i.e "yyyy-MM-dd HH:mm:ss.SSS"
+    //let date_to_mpesa = Local::now().format("%Y-%m-%d %H:%M:%S%.3f").to_string();
+    let res = client
+        .post(api_url)
+        .header(CONTENT_TYPE, "application/json")
+        .header(ACCEPT, "application/json")
+        .header("Authorization", access_token)
+        .json(&business_buy_goods_data)
+        .send()
+        //.await?; //The "?" after the await returns errors immediately and hence will not be captured on match clause below
+        .await;
+
+    match res {
+        Err(e) => {
+            //println!("server not responding");
+            println!("server not responding: {:?}", e.to_string());
+        }
+        Ok(response) => {
+            match response.status() {
+                StatusCode::OK => {
+                    let date_from_mpesa = Local::now().format("%Y-%m-%d %H:%M:%S%.3f").to_string();
+                    let k = String::from(""); //Default value.
+                    let m: u32 = 0; //Default value.
+
+                    let my_output = response.json::<BusinessBuyGoodsResponseData>().await?;
+
+                    let originator_conversation_id =
+                        &my_output.OriginatorConversationID.as_ref().unwrap_or(&k);
+                    let conversation_id = &my_output.ConversationID.as_ref().unwrap_or(&k);
+                    let response_code = &my_output.ResponseCode.as_ref().unwrap_or(&k);
+                    let response_description =
+                        &my_output.ResponseDescription.as_ref().unwrap_or(&k);
+
+                    //
+                    business_buy_goods_response_data.OriginatorConversationID =
+                        Some(originator_conversation_id.to_string());
+                    business_buy_goods_response_data.ConversationID =
+                        Some(conversation_id.to_string());
+                    business_buy_goods_response_data.ResponseCode = Some(response_code.to_string());
+                    business_buy_goods_response_data.ResponseDescription =
+                        Some(response_description.to_string());
+                    /*
+                    println!(
+                        "business_to_customer_response_data: {:?}",
+                        &business_to_customer_response_data
+                    );
+                    */
+
+                    /*
+                    create_b2c_acknowledgement(
+                        &data,
+                        originator_conversation_id.to_string(),
+                        conversation_id.to_string(),
+                        response_code.to_string(),
+                        response_description.to_string(),
+                        business_to_customer_data.CommandID,
+                        business_to_customer_data.PartyA,
+                        business_to_customer_data.PartyB,
+                        business_to_customer_data.Amount,
+                        request_id,
+                        error_code,
+                        error_message,
+                        date_to_mpesa,
+                        date_from_mpesa,
+                    );
+                    */
+                }
+                s => {
+                    let date_from_mpesa = Local::now().format("%Y-%m-%d %H:%M:%S%.3f").to_string();
+                    let k = String::from(""); //Default value.
+                    let m: u32 = 0; //Default value.
+                    let my_output = response.json::<BusinessBuyGoodsErrorResponseData>().await?;
+
+                    let request_id = &my_output.requestId.as_ref().unwrap_or(&k);
+                    let error_code = &my_output.errorCode.as_ref().unwrap_or(&k);
+                    let error_message = &my_output.errorMessage.as_ref().unwrap_or(&k);
+
+                    let originator_conversation_id = request_id.to_string();
+                    let conversation_id = String::from("");
+                    let response_code = error_code.to_string();
+                    let response_description = error_message.to_string();
+
+                    business_buy_goods_response_data.OriginatorConversationID =
+                        Some(originator_conversation_id.to_string());
+                    business_buy_goods_response_data.ConversationID =
+                        Some(conversation_id.to_string());
+                    business_buy_goods_response_data.ResponseCode = Some(response_code.to_string());
+                    business_buy_goods_response_data.ResponseDescription =
+                        Some(response_description.to_string());
+
+                    //println!("my_output: {:?}", &my_output);
+
+                    /*
+                    create_b2c_acknowledgement(
+                        &data,
+                        originator_conversation_id.to_string(),
+                        conversation_id.to_string(),
+                        response_code.to_string(),
+                        response_description.to_string(),
+                        business_to_customer_data.CommandID,
+                        business_to_customer_data.PartyA,
+                        business_to_customer_data.PartyB,
+                        business_to_customer_data.Amount,
+                        request_id.to_string(),
+                        error_code.to_string(),
+                        error_message.to_string(),
+                        date_to_mpesa,
+                        date_from_mpesa,
+                    );
+                    */
+                }
+            }
+        }
+    };
+
+    Ok(business_buy_goods_response_data)
 }
