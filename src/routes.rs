@@ -44,12 +44,16 @@ pub(crate) async fn generate_auth(data: web::Data<Pool>) -> impl Responder {
     let consumer_key = get_settings_details(&data, String::from("consumerkeympesa"));
     let consumer_secret = get_settings_details(&data, String::from("consumersecretmpesa"));
     let auth_token_url = get_settings_details(&data, String::from("authtokenurlmpesa"));
+    let register_url: String = String::from("");
+    let b2c_payment_request_url: String = String::from("");
     let stk_push_url: String = String::from("");
     let b2b_payment_request_url: String = String::from("");
     let mpesa_gateway = MpesaGateway::new(
         consumer_key,
         consumer_secret,
         auth_token_url,
+        register_url,
+        b2c_payment_request_url,
         stk_push_url,
         b2b_payment_request_url,
     );
@@ -79,12 +83,17 @@ pub(crate) async fn register_client_urls(data: web::Data<Pool>) -> impl Responde
     let consumer_key: String = get_settings_details(&data, String::from("consumerkeympesa"));
     let consumer_secret: String = get_settings_details(&data, String::from("consumersecretmpesa"));
     let auth_token_url: String = get_settings_details(&data, String::from("authtokenurlmpesa"));
+    let register_url: String =
+        String::from("https://sandbox.safaricom.co.ke/mpesa/c2b/v1/registerurl");
+    let b2c_payment_request_url: String = String::from("");
     let stk_push_url: String = String::from("");
     let b2b_payment_request_url: String = String::from("");
     let mpesa_gateway: MpesaGateway = MpesaGateway::new(
         consumer_key,
         consumer_secret,
         auth_token_url,
+        register_url,
+        b2c_payment_request_url,
         stk_push_url,
         b2b_payment_request_url,
     );
@@ -100,10 +109,13 @@ pub(crate) async fn register_client_urls(data: web::Data<Pool>) -> impl Responde
 
 #[post("/processb2c")]
 pub(crate) async fn process_b2c(data: web::Data<Pool>) -> impl Responder {
-    let register_url_details = get_register_url_details(&data);
+    //let register_url_details = get_register_url_details(&data);
     let consumer_key: String = get_settings_details(&data, String::from("consumerkeympesa"));
     let consumer_secret: String = get_settings_details(&data, String::from("consumersecretmpesa"));
     let auth_token_url: String = get_settings_details(&data, String::from("authtokenurlmpesa"));
+    let register_url: String = String::from("");
+    let b2c_payment_request_url: String =
+        String::from("https://sandbox.safaricom.co.ke/mpesa/b2c/v1/paymentrequest");
     let stk_push_url: String = String::from("");
     let b2b_payment_request_url: String = String::from("");
 
@@ -133,6 +145,8 @@ pub(crate) async fn process_b2c(data: web::Data<Pool>) -> impl Responder {
         consumer_key,
         consumer_secret,
         auth_token_url,
+        register_url,
+        b2c_payment_request_url,
         stk_push_url,
         b2b_payment_request_url,
     );
@@ -151,8 +165,9 @@ pub(crate) async fn process_c2b_payment(data: web::Data<Pool>) -> impl Responder
     let consumer_key: String = get_settings_details(&data, String::from("consumerkeympesa"));
     let consumer_secret: String = get_settings_details(&data, String::from("consumersecretmpesa"));
     let auth_token_url: String = get_settings_details(&data, String::from("authtokenurlmpesa"));
+    let register_url: String = String::from("");
+    let b2c_payment_request_url: String = String::from("");
 
-    //let api_url: String = String::from("https://sandbox.safaricom.co.ke/mpesa/stkpush/v1/processrequest");
     let stk_push_url: String =
         String::from("https://sandbox.safaricom.co.ke/mpesa/stkpush/v1/processrequest");
     let b2b_payment_request_url: String = String::from("");
@@ -202,6 +217,8 @@ pub(crate) async fn process_c2b_payment(data: web::Data<Pool>) -> impl Responder
         consumer_key,
         consumer_secret,
         auth_token_url,
+        register_url,
+        b2c_payment_request_url,
         stk_push_url,
         b2b_payment_request_url,
     );
@@ -220,6 +237,8 @@ pub(crate) async fn process_business_paybill(data: web::Data<Pool>) -> impl Resp
     let consumer_key: String = get_settings_details(&data, String::from("consumerkeympesa"));
     let consumer_secret: String = get_settings_details(&data, String::from("consumersecretmpesa"));
     let auth_token_url: String = get_settings_details(&data, String::from("authtokenurlmpesa"));
+    let register_url: String = String::from("");
+    let b2c_payment_request_url: String = String::from("");
 
     //let api_url: String = String::from("https://sandbox.safaricom.co.ke/mpesa/b2b/v1/paymentrequest");
     let stk_push_url: String = String::from("");
@@ -266,6 +285,8 @@ pub(crate) async fn process_business_paybill(data: web::Data<Pool>) -> impl Resp
         consumer_key,
         consumer_secret,
         auth_token_url,
+        register_url,
+        b2c_payment_request_url,
         stk_push_url,
         b2b_payment_request_url,
     );
@@ -284,6 +305,8 @@ pub(crate) async fn process_business_buy_goods(data: web::Data<Pool>) -> impl Re
     let consumer_key: String = get_settings_details(&data, String::from("consumerkeympesa"));
     let consumer_secret: String = get_settings_details(&data, String::from("consumersecretmpesa"));
     let auth_token_url: String = get_settings_details(&data, String::from("authtokenurlmpesa"));
+    let register_url: String = String::from("");
+    let b2c_payment_request_url: String = String::from("");
 
     //let api_url: String = String::from("https://sandbox.safaricom.co.ke/mpesa/b2b/v1/paymentrequest");
     let stk_push_url: String = String::from("");
@@ -330,6 +353,8 @@ pub(crate) async fn process_business_buy_goods(data: web::Data<Pool>) -> impl Re
         consumer_key,
         consumer_secret,
         auth_token_url,
+        register_url,
+        b2c_payment_request_url,
         stk_push_url,
         b2b_payment_request_url,
     );
@@ -1369,20 +1394,14 @@ fn get_api_key(data: &web::Data<Pool>) -> String {
 }
 
 fn get_register_url_details(data: &web::Data<Pool>) -> RegisterUrlInputDetails {
-    let mut access_token = String::from("Bearer");
-    let k = " "; // Separator
-    let password: String = get_mpesa_access_token(&data);
-    access_token.push_str(k);
-    access_token.push_str(&password);
-    let api_url = get_settings_details(&data, String::from("c2bregisterurlmpesa"));
+    //let api_url = get_settings_details(&data, String::from("c2bregisterurlmpesa"));
     let short_code = get_settings_details(&data, String::from("c2bregisterbusinessshortcodempesa"));
     let response_type = get_settings_details(&data, String::from("c2bregisterresponsetypempesa"));
     let confirmation_url = get_settings_details(&data, String::from("confirmationc2burlmpesa"));
     let validation_url = get_settings_details(&data, String::from("validationc2burlmpesa"));
 
     let register_url_details = RegisterUrlInputDetails {
-        //access_token: access_token,
-        api_url: api_url,
+        //api_url: api_url,
         short_code: short_code,
         response_type: response_type,
         confirmation_url: confirmation_url,
@@ -1417,7 +1436,7 @@ fn get_business_to_customer_details(
     };
 
     let business_to_customer_data = BusinessToCustomerInputDetails {
-        api_url: my_api_url,
+        //api_url: my_api_url,
         initiator_name: my_initiator_name,
         security_credential: my_security_credential,
         command_id: my_command_id,

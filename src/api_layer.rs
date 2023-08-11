@@ -71,7 +71,7 @@ pub async fn register_url(
     register_url_details: RegisterUrlInputDetails,
 ) -> std::result::Result<(), reqwest::Error> {
     let access_token: String = String::from(""); //register_url_details.access_token;
-    let api_url: String = register_url_details.api_url;
+    let api_url: String = String::from(""); //register_url_details.api_url;
     let short_code: String = register_url_details.short_code;
     let response_type: String = register_url_details.response_type;
     let confirmation_url: String = register_url_details.confirmation_url;

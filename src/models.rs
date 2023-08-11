@@ -375,7 +375,7 @@ pub struct BusinessBuyGoodsFailedData {
 // This struct holds  Register Url processing data
 pub struct RegisterUrlInputDetails {
     //pub access_token: String,
-    pub api_url: String,
+    //pub api_url: String,
     pub short_code: String,
     pub response_type: String,
     pub confirmation_url: String,
@@ -385,7 +385,7 @@ pub struct RegisterUrlInputDetails {
 // This struct holds  Business To Customer processing data
 #[derive(Debug)]
 pub struct BusinessToCustomerInputDetails {
-    pub api_url: String,
+    //pub api_url: String,
     pub initiator_name: String,
     pub security_credential: String,
     pub command_id: String,

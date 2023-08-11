@@ -28,6 +28,8 @@ pub struct MpesaGateway {
     consumer_key: String,
     consumer_secret: String,
     auth_token_url: String,
+    register_url: String,
+    b2c_payment_request_url: String,
     stk_push_url: String,
     b2b_payment_request_url: String,
 }
@@ -37,6 +39,8 @@ impl MpesaGateway {
         consumer_key: String,
         consumer_secret: String,
         auth_token_url: String,
+        register_url: String,
+        b2c_payment_request_url: String,
         stk_push_url: String,
         b2b_payment_request_url: String,
     ) -> Self {
@@ -44,6 +48,8 @@ impl MpesaGateway {
             consumer_key: consumer_key,
             consumer_secret: consumer_secret,
             auth_token_url: auth_token_url,
+            register_url: register_url,
+            b2c_payment_request_url: b2c_payment_request_url,
             stk_push_url: stk_push_url,
             b2b_payment_request_url: b2b_payment_request_url,
         }
@@ -115,58 +121,38 @@ impl MpesaGateway {
         &self,
         register_url_details: RegisterUrlInputDetails,
     ) -> RegisterUrlResponseData {
-        let xy = self.get_auth_token();
-        let access_token: String = xy.await;
-        println!("access_token: {:?}", &access_token);
+        let _output = self.get_auth_token();
+        let access_token: String = _output.await;
+        let api_url = &self.register_url;
+        //println!("access_token: {:?}", &access_token);
+        let register_url_response_data = RegisterUrlResponseData {
+            OriginatorCoversationID: None,
+            ConversationID: None,
+            ResponseDescription: None,
+        };
 
-        if access_token.is_empty() {
-            println!("access_token is empty: {:?}", &access_token);
+        if access_token.is_empty()
+            || api_url.is_empty()
+            || register_url_details.short_code.is_empty()
+        {
+            println!("access_token or api_url or register_url_details is empty");
+            /*
             let b = RegisterUrlResponseData {
                 OriginatorCoversationID: None,
                 ConversationID: None,
                 ResponseDescription: None,
             };
             return b;
-        }
-        /*
-        let xy = tokio::spawn(async move {
-            // Process each request concurrently.
-            let _register_url_response_data =
-                register_url(register_url_details, access_token).await;
-            let register_url_response_data: RegisterUrlResponseData =
-                match _register_url_response_data {
-                    Ok(a) => a,
-                    Err(e) => {
-                        let b = RegisterUrlResponseData {
-                            OriginatorCoversationID: None,
-                            ConversationID: None,
-                            ResponseDescription: None,
-                        };
-
-                        b
-                    }
-                };
+            */
             return register_url_response_data;
-        });
+        }
 
-        let register_url_response_data: RegisterUrlResponseData = match xy.await {
-            Ok(a) => a,
-            Err(e) => {
-                let b = RegisterUrlResponseData {
-                    OriginatorCoversationID: None,
-                    ConversationID: None,
-                    ResponseDescription: None,
-                };
-
-                b
-            }
-        };
-        */
-        let _result = register_url(register_url_details, access_token).await;
+        let _result = register_url(register_url_details, access_token, api_url.to_string()).await;
 
         let register_url_response_data: RegisterUrlResponseData = match _result {
             Ok(a) => a,
             Err(e) => {
+                /*
                 let b = RegisterUrlResponseData {
                     OriginatorCoversationID: None,
                     ConversationID: None,
@@ -174,6 +160,8 @@ impl MpesaGateway {
                 };
 
                 b
+                */
+                register_url_response_data
             }
         };
 
@@ -184,11 +172,23 @@ impl MpesaGateway {
         &self,
         business_to_customer_details: BusinessToCustomerInputDetails,
     ) -> BusinessToCustomerResponseData {
-        let xy = self.get_auth_token();
-        let access_token: String = xy.await;
+        let _output = self.get_auth_token();
+        let access_token: String = _output.await;
+        let api_url = &self.b2c_payment_request_url;
         //println!("access_token: {:?}", &access_token);
 
-        if access_token.is_empty() || business_to_customer_details.api_url.is_empty() {
+        let business_to_customer_response_data = BusinessToCustomerResponseData {
+            OriginatorConversationID: None,
+            ConversationID: None,
+            ResponseCode: None,
+            ResponseDescription: None,
+        };
+
+        if access_token.is_empty()
+            || api_url.is_empty()
+            || business_to_customer_details.command_id.is_empty()
+        {
+            /*
             println!("access_token: {:?}", &access_token);
             println!(
                 "business_to_customer_details: {:?}",
@@ -201,13 +201,22 @@ impl MpesaGateway {
                 ResponseDescription: None,
             };
             return b;
+            */
+            println!("access_token or api_url or business_to_customer_details is empty");
+            return business_to_customer_response_data;
         }
 
-        let _result = business_to_customer(business_to_customer_details, access_token).await;
+        let _result = business_to_customer(
+            business_to_customer_details,
+            access_token,
+            api_url.to_string(),
+        )
+        .await;
 
         let business_to_customer_response_data: BusinessToCustomerResponseData = match _result {
             Ok(a) => a,
             Err(e) => {
+                /*
                 let b = BusinessToCustomerResponseData {
                     OriginatorConversationID: None,
                     ConversationID: None,
@@ -216,6 +225,8 @@ impl MpesaGateway {
                 };
 
                 b
+                */
+                business_to_customer_response_data
             }
         };
 
@@ -226,12 +237,22 @@ impl MpesaGateway {
         &self,
         customer_to_business_details: CustomerToBusinessPaymentInputDetails,
     ) -> CustomerToBusinessPaymentResponseData {
-        let xy = self.get_auth_token();
-        let access_token: String = xy.await;
+        let _output = self.get_auth_token();
+        let access_token: String = _output.await;
         let api_url = &self.stk_push_url;
         //println!("access_token: {:?}", &access_token);
+        let customer_to_business_response_data = CustomerToBusinessPaymentResponseData {
+            MerchantRequestID: None,
+            CheckoutRequestID: None,
+            ResponseCode: None,
+            ResponseDescription: None,
+            CustomerMessage: None,
+        };
 
-        if access_token.is_empty() || api_url.is_empty() {
+        if access_token.is_empty()
+            || api_url.is_empty()
+            || customer_to_business_details.business_short_code.is_empty()
+        {
             /*
             println!("access_token: {:?}", &access_token);
             println!(
@@ -239,7 +260,8 @@ impl MpesaGateway {
                 &customer_to_business_details
             );
             */
-            println!("access_token or api_url is empty");
+            println!("access_token or api_url or customer_to_business_details is empty");
+            /*
             let b = CustomerToBusinessPaymentResponseData {
                 MerchantRequestID: None,
                 CheckoutRequestID: None,
@@ -248,6 +270,8 @@ impl MpesaGateway {
                 CustomerMessage: None,
             };
             return b;
+            */
+            return customer_to_business_response_data;
         }
 
         let _result = customer_to_business_payment(
@@ -261,6 +285,7 @@ impl MpesaGateway {
             match _result {
                 Ok(a) => a,
                 Err(e) => {
+                    /*
                     let b = CustomerToBusinessPaymentResponseData {
                         MerchantRequestID: None,
                         CheckoutRequestID: None,
@@ -270,6 +295,8 @@ impl MpesaGateway {
                     };
 
                     b
+                    */
+                    customer_to_business_response_data
                 }
             };
 
@@ -280,12 +307,21 @@ impl MpesaGateway {
         &self,
         business_paybill_details: BusinessPayBillInputDetails,
     ) -> BusinessPayBillResponseData {
-        let xy = self.get_auth_token();
-        let access_token: String = xy.await;
+        let _output = self.get_auth_token();
+        let access_token: String = _output.await;
         let api_url = &self.b2b_payment_request_url;
         //println!("access_token: {:?}", &access_token);
+        let business_paybill_response_data = BusinessPayBillResponseData {
+            OriginatorConversationID: None,
+            ConversationID: None,
+            ResponseCode: None,
+            ResponseDescription: None,
+        };
 
-        if access_token.is_empty() || api_url.is_empty() {
+        if access_token.is_empty()
+            || api_url.is_empty()
+            || business_paybill_details.command_id.is_empty()
+        {
             /*
             println!("access_token: {:?}", &access_token);
             println!(
@@ -293,7 +329,8 @@ impl MpesaGateway {
                 &business_paybill_details
             );
             */
-            println!("access_token or api_url is empty");
+            println!("access_token or api_url or business_paybill_details is empty");
+            /*
             let b = BusinessPayBillResponseData {
                 OriginatorConversationID: None,
                 ConversationID: None,
@@ -301,6 +338,8 @@ impl MpesaGateway {
                 ResponseDescription: None,
             };
             return b;
+            */
+            return business_paybill_response_data;
         }
 
         let _result =
@@ -309,6 +348,7 @@ impl MpesaGateway {
         let business_paybill_response_data: BusinessPayBillResponseData = match _result {
             Ok(a) => a,
             Err(e) => {
+                /*
                 let b = BusinessPayBillResponseData {
                     OriginatorConversationID: None,
                     ConversationID: None,
@@ -317,6 +357,8 @@ impl MpesaGateway {
                 };
 
                 b
+                */
+                business_paybill_response_data
             }
         };
 
@@ -327,12 +369,21 @@ impl MpesaGateway {
         &self,
         business_buy_goods_details: BusinessBuyGoodsInputDetails,
     ) -> BusinessBuyGoodsResponseData {
-        let xy = self.get_auth_token();
-        let access_token: String = xy.await;
+        let _output = self.get_auth_token();
+        let access_token: String = _output.await;
         let api_url = &self.b2b_payment_request_url;
         //println!("access_token: {:?}", &access_token);
+        let business_buy_goods_response_data = BusinessBuyGoodsResponseData {
+            OriginatorConversationID: None,
+            ConversationID: None,
+            ResponseCode: None,
+            ResponseDescription: None,
+        };
 
-        if access_token.is_empty() || api_url.is_empty() {
+        if access_token.is_empty()
+            || api_url.is_empty()
+            || business_buy_goods_details.command_id.is_empty()
+        {
             /*
             println!("access_token: {:?}", &access_token);
             println!(
@@ -340,7 +391,8 @@ impl MpesaGateway {
                 &business_buy_goods_details
             );
             */
-            println!("access_token or api_url is empty");
+            println!("access_token or api_url or business_buy_goods_details is empty");
+            /*
             let b = BusinessBuyGoodsResponseData {
                 OriginatorConversationID: None,
                 ConversationID: None,
@@ -348,6 +400,8 @@ impl MpesaGateway {
                 ResponseDescription: None,
             };
             return b;
+            */
+            return business_buy_goods_response_data;
         }
 
         let _result = business_buy_goods(
@@ -360,6 +414,7 @@ impl MpesaGateway {
         let business_buy_goods_response_data: BusinessBuyGoodsResponseData = match _result {
             Ok(a) => a,
             Err(e) => {
+                /*
                 let b = BusinessBuyGoodsResponseData {
                     OriginatorConversationID: None,
                     ConversationID: None,
@@ -368,6 +423,8 @@ impl MpesaGateway {
                 };
 
                 b
+                */
+                business_buy_goods_response_data
             }
         };
 
@@ -436,8 +493,8 @@ async fn generate_auth_token(
 pub async fn register_url(
     register_url_details: RegisterUrlInputDetails,
     access_token: String,
+    api_url: String,
 ) -> std::result::Result<RegisterUrlResponseData, reqwest::Error> {
-    let api_url: String = register_url_details.api_url;
     let short_code: String = register_url_details.short_code;
     let response_type: String = register_url_details.response_type;
     let confirmation_url: String = register_url_details.confirmation_url;
@@ -517,8 +574,9 @@ pub async fn register_url(
 pub async fn business_to_customer(
     business_to_customer_details: BusinessToCustomerInputDetails,
     access_token: String,
+    api_url: String,
 ) -> std::result::Result<BusinessToCustomerResponseData, reqwest::Error> {
-    let api_url: String = business_to_customer_details.api_url;
+    //let api_url: String = business_to_customer_details.api_url;
     let initiator_name: String = business_to_customer_details.initiator_name;
     let security_credential: String = business_to_customer_details.security_credential;
     let command_id: String = business_to_customer_details.command_id;
