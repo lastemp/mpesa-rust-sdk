@@ -4,12 +4,15 @@ use crate::api_layer::{generate_auth_token, register_url};
 use crate::mpesa::MpesaGateway;
 use crate::{
     models::{
-        B2CFailedData, B2CResultData, BusinessBuyGoodsFailedData, BusinessBuyGoodsInputDetails,
-        BusinessBuyGoodsResponseData, BusinessBuyGoodsResultData, BusinessPayBillFailedData,
-        BusinessPayBillInputDetails, BusinessPayBillResultData, BusinessToCustomerInputDetails,
-        C2bData, ConfirmationResponseData, CustomerToBusinessPaymentInputDetails,
-        CustomerToBusinessPaymentResultData, ItemDetails, MixedTypeValue, RegisterUrlInputDetails,
-        ValidationResponseData,
+        B2CFailedData, B2CResultData, BusinessBuyGoodsErrorResponseData,
+        BusinessBuyGoodsFailedData, BusinessBuyGoodsInputDetails, BusinessBuyGoodsResponseData,
+        BusinessBuyGoodsResultData, BusinessPayBillErrorResponseData, BusinessPayBillFailedData,
+        BusinessPayBillInputDetails, BusinessPayBillResponseData, BusinessPayBillResultData,
+        BusinessToCustomerErrorResponseData, BusinessToCustomerInputDetails,
+        BusinessToCustomerResponseData, C2bData, ConfirmationResponseData,
+        CustomerToBusinessPaymentErrorResponseData, CustomerToBusinessPaymentInputDetails,
+        CustomerToBusinessPaymentResponseData, CustomerToBusinessPaymentResultData, ItemDetails,
+        MixedTypeValue, RegisterUrlInputDetails, ValidationResponseData,
     },
     persistence::{
         create_incoming_c2b_mpesa_confirmation_requests,
@@ -25,6 +28,7 @@ use base64::{
 };
 use chrono::prelude::*;
 use mysql::*;
+//use reqwest::Error;
 use serde::{Deserialize, Serialize};
 use std::str;
 
@@ -97,8 +101,8 @@ pub(crate) async fn register_client_urls(data: web::Data<Pool>) -> impl Responde
         stk_push_url,
         b2b_payment_request_url,
     );
-    let xy = mpesa_gateway.get_register_url(register_url_details);
-    let register_url_response_data = xy.await;
+    let _output = mpesa_gateway.get_register_url(register_url_details);
+    let register_url_response_data = _output.await;
     println!(
         "register_url_response_data: {:?}",
         &register_url_response_data
@@ -109,7 +113,6 @@ pub(crate) async fn register_client_urls(data: web::Data<Pool>) -> impl Responde
 
 #[post("/processb2c")]
 pub(crate) async fn process_b2c(data: web::Data<Pool>) -> impl Responder {
-    //let register_url_details = get_register_url_details(&data);
     let consumer_key: String = get_settings_details(&data, String::from("consumerkeympesa"));
     let consumer_secret: String = get_settings_details(&data, String::from("consumersecretmpesa"));
     let auth_token_url: String = get_settings_details(&data, String::from("authtokenurlmpesa"));
@@ -150,11 +153,75 @@ pub(crate) async fn process_b2c(data: web::Data<Pool>) -> impl Responder {
         stk_push_url,
         b2b_payment_request_url,
     );
-    let xy = mpesa_gateway.get_b2c(business_to_customer_data);
-    let business_to_customer_response_data = xy.await;
+    let _output = mpesa_gateway.get_b2c(business_to_customer_data);
+    //let business_to_customer_response_data = _output.await;
+    let _result: std::result::Result<
+        (
+            BusinessToCustomerResponseData,
+            BusinessToCustomerErrorResponseData,
+        ),
+        reqwest::Error,
+    > = _output.await;
+    //let _result = _output.await;
+    //let business_to_customer_response_data: Result<BusinessToCustomerResponseData, Error> =
+    /*
+    let business_to_customer_response_data = match _result {
+        Ok(x) => x,
+        Err(e) => {
+            println!("server not responding: {:?}", e.to_string());
+            let b = BusinessToCustomerResponseData {
+                OriginatorConversationID: None,
+                ConversationID: None,
+                ResponseCode: None,
+                ResponseDescription: None,
+            };
+
+            b
+        }
+    };
+    */
+
+    let (business_to_customer_response_data, business_to_customer_error_response_data, error_data) =
+        match _result {
+            //Ok(x) => (x, None),
+            Ok(x) => {
+                /*
+                match x {
+                    a: BusinessToCustomerResponseData => a,
+                    b: BusinessToCustomerErrorResponseData => b,
+                    _ => c,
+                }
+                */
+                let (a, b) = x;
+                (a, b, None)
+            }
+            Err(e) => {
+                println!("server not responding: {:?}", e.to_string());
+                let a = BusinessToCustomerResponseData {
+                    OriginatorConversationID: None,
+                    ConversationID: None,
+                    ResponseCode: None,
+                    ResponseDescription: None,
+                };
+
+                let b = BusinessToCustomerErrorResponseData {
+                    requestId: None,
+                    errorCode: None,
+                    errorMessage: None,
+                };
+
+                (a, b, Some(e))
+            }
+        };
+
     println!(
         "business_to_customer_response_data: {:?}",
         &business_to_customer_response_data
+    );
+
+    println!(
+        "business_to_customer_error_response_data: {:?}",
+        &business_to_customer_error_response_data
     );
 
     format!("")
@@ -168,6 +235,7 @@ pub(crate) async fn process_c2b_payment(data: web::Data<Pool>) -> impl Responder
     let register_url: String = String::from("");
     let b2c_payment_request_url: String = String::from("");
 
+    //let api_url: String = String::from("https://sandbox.safaricom.co.ke/mpesa/stkpush/v1/processrequest");
     let stk_push_url: String =
         String::from("https://sandbox.safaricom.co.ke/mpesa/stkpush/v1/processrequest");
     let b2b_payment_request_url: String = String::from("");
@@ -222,11 +290,53 @@ pub(crate) async fn process_c2b_payment(data: web::Data<Pool>) -> impl Responder
         stk_push_url,
         b2b_payment_request_url,
     );
-    let xy = mpesa_gateway.get_c2b_payment(customer_to_business_details);
-    let customer_to_business_response_data = xy.await;
+    /*
+    let _output = mpesa_gateway.get_c2b_payment(customer_to_business_details);
+    let customer_to_business_response_data = _output.await;
+    */
+    let _output = mpesa_gateway.get_c2b_payment(customer_to_business_details);
+    let _result: std::result::Result<
+        (
+            CustomerToBusinessPaymentResponseData,
+            CustomerToBusinessPaymentErrorResponseData,
+        ),
+        reqwest::Error,
+    > = _output.await;
+
+    let (customer_to_business_response_data, customer_to_business_error_response_data, error_data) =
+        match _result {
+            Ok(x) => {
+                let (a, b) = x;
+                (a, b, None)
+            }
+            Err(e) => {
+                println!("server not responding: {:?}", e.to_string());
+                let a = CustomerToBusinessPaymentResponseData {
+                    MerchantRequestID: None,
+                    CheckoutRequestID: None,
+                    ResponseCode: None,
+                    ResponseDescription: None,
+                    CustomerMessage: None,
+                };
+
+                let b = CustomerToBusinessPaymentErrorResponseData {
+                    requestId: None,
+                    errorCode: None,
+                    errorMessage: None,
+                };
+
+                (a, b, Some(e))
+            }
+        };
+
     println!(
         "customer_to_business_response_data: {:?}",
         &customer_to_business_response_data
+    );
+
+    println!(
+        "customer_to_business_error_response_data: {:?}",
+        &customer_to_business_error_response_data
     );
 
     format!("")
@@ -244,7 +354,7 @@ pub(crate) async fn process_business_paybill(data: web::Data<Pool>) -> impl Resp
     let stk_push_url: String = String::from("");
     let b2b_payment_request_url: String =
         String::from("https://sandbox.safaricom.co.ke/mpesa/b2b/v1/paymentrequest");
-    let _initiator: String = String::from("test***");
+    let _initiator: String = String::from("testapi");
     let security_credential: String = String::from("***");
     let command_id: String = String::from("BusinessPayBill");
     let sender_identifier_type: String = String::from("4");
@@ -259,7 +369,6 @@ pub(crate) async fn process_business_paybill(data: web::Data<Pool>) -> impl Resp
     let result_url: String = String::from("https://mydomain.com/b2b/result/");
 
     let business_paybill_details: BusinessPayBillInputDetails = BusinessPayBillInputDetails {
-        //api_url: api_url,
         _initiator: _initiator,
         security_credential: security_credential,
         command_id: command_id,
@@ -290,11 +399,51 @@ pub(crate) async fn process_business_paybill(data: web::Data<Pool>) -> impl Resp
         stk_push_url,
         b2b_payment_request_url,
     );
-    let xy = mpesa_gateway.get_business_paybill(business_paybill_details);
-    let business_paybill_response_data = xy.await;
+    let _output = mpesa_gateway.get_business_paybill(business_paybill_details);
+    /*
+    let business_paybill_response_data = _output.await;
+    */
+    let _result: std::result::Result<
+        (
+            BusinessPayBillResponseData,
+            BusinessPayBillErrorResponseData,
+        ),
+        reqwest::Error,
+    > = _output.await;
+
+    let (business_paybill_response_data, business_paybill_error_response_data, error_data) =
+        match _result {
+            Ok(x) => {
+                let (a, b) = x;
+                (a, b, None)
+            }
+            Err(e) => {
+                println!("server not responding: {:?}", e.to_string());
+                let a = BusinessPayBillResponseData {
+                    OriginatorConversationID: None,
+                    ConversationID: None,
+                    ResponseCode: None,
+                    ResponseDescription: None,
+                };
+
+                let b = BusinessPayBillErrorResponseData {
+                    requestId: None,
+                    errorCode: None,
+                    errorMessage: None,
+                };
+
+                (a, b, Some(e))
+            }
+        };
+
     println!(
         "business_paybill_response_data: {:?}",
         &business_paybill_response_data
+    );
+
+    println!(
+        "business_paybill_error_response_data: {:?}",
+        &business_paybill_error_response_data
     );
 
     format!("")
@@ -308,11 +457,10 @@ pub(crate) async fn process_business_buy_goods(data: web::Data<Pool>) -> impl Re
     let register_url: String = String::from("");
     let b2c_payment_request_url: String = String::from("");
 
-    //let api_url: String = String::from("https://sandbox.safaricom.co.ke/mpesa/b2b/v1/paymentrequest");
     let stk_push_url: String = String::from("");
     let b2b_payment_request_url: String =
         String::from("https://sandbox.safaricom.co.ke/mpesa/b2b/v1/paymentrequest");
-    let _initiator: String = String::from("test***");
+    let _initiator: String = String::from("testapi");
     let security_credential: String = String::from("***");
     let command_id: String = String::from("BusinessBuyGoods");
     let sender_identifier_type: String = String::from("4");
@@ -327,7 +475,6 @@ pub(crate) async fn process_business_buy_goods(data: web::Data<Pool>) -> impl Re
     let result_url: String = String::from("https://mydomain.com/b2b/result/");
 
     let business_buy_goods_details: BusinessBuyGoodsInputDetails = BusinessBuyGoodsInputDetails {
-        //api_url: api_url,
         _initiator: _initiator,
         security_credential: security_credential,
         command_id: command_id,
@@ -358,11 +505,52 @@ pub(crate) async fn process_business_buy_goods(data: web::Data<Pool>) -> impl Re
         stk_push_url,
         b2b_payment_request_url,
     );
-    let xy = mpesa_gateway.get_business_buy_goods(business_buy_goods_details);
-    let business_buy_goods_response_data = xy.await;
+    let _output = mpesa_gateway.get_business_buy_goods(business_buy_goods_details);
+    /*
+    let business_buy_goods_response_data = _output.await;
+    */
+
+    let _result: std::result::Result<
+        (
+            BusinessBuyGoodsResponseData,
+            BusinessBuyGoodsErrorResponseData,
+        ),
+        reqwest::Error,
+    > = _output.await;
+
+    let (business_buy_goods_response_data, business_buy_goods_error_response_data, error_data) =
+        match _result {
+            Ok(x) => {
+                let (a, b) = x;
+                (a, b, None)
+            }
+            Err(e) => {
+                println!("server not responding: {:?}", e.to_string());
+                let a = BusinessBuyGoodsResponseData {
+                    OriginatorConversationID: None,
+                    ConversationID: None,
+                    ResponseCode: None,
+                    ResponseDescription: None,
+                };
+
+                let b = BusinessBuyGoodsErrorResponseData {
+                    requestId: None,
+                    errorCode: None,
+                    errorMessage: None,
+                };
+
+                (a, b, Some(e))
+            }
+        };
+
     println!(
         "business_buy_goods_response_data: {:?}",
         &business_buy_goods_response_data
+    );
+
+    println!(
+        "business_buy_goods_error_response_data: {:?}",
+        &business_buy_goods_error_response_data
     );
 
     format!("")

@@ -171,7 +171,13 @@ impl MpesaGateway {
     pub async fn get_b2c(
         &self,
         business_to_customer_details: BusinessToCustomerInputDetails,
-    ) -> BusinessToCustomerResponseData {
+    ) -> std::result::Result<
+        (
+            BusinessToCustomerResponseData,
+            BusinessToCustomerErrorResponseData,
+        ),
+        reqwest::Error,
+    > {
         let _output = self.get_auth_token();
         let access_token: String = _output.await;
         let api_url = &self.b2c_payment_request_url;
@@ -183,6 +189,17 @@ impl MpesaGateway {
             ResponseCode: None,
             ResponseDescription: None,
         };
+
+        let business_to_customer_error_response_data = BusinessToCustomerErrorResponseData {
+            requestId: None,
+            errorCode: None,
+            errorMessage: None,
+        };
+
+        let my_output = (
+            business_to_customer_response_data,
+            business_to_customer_error_response_data,
+        );
 
         if access_token.is_empty()
             || api_url.is_empty()
@@ -203,9 +220,20 @@ impl MpesaGateway {
             return b;
             */
             println!("access_token or api_url or business_to_customer_details is empty");
-            return business_to_customer_response_data;
+            return Ok(my_output);
+            //return Err("access_token or api_url or business_to_customer_details is empty");
+            // return error
         }
 
+        let _result = business_to_customer(
+            business_to_customer_details,
+            access_token,
+            api_url.to_string(),
+        )
+        .await;
+
+        _result
+        /*
         let _result = business_to_customer(
             business_to_customer_details,
             access_token,
@@ -231,12 +259,19 @@ impl MpesaGateway {
         };
 
         business_to_customer_response_data
+        */
     }
 
     pub async fn get_c2b_payment(
         &self,
         customer_to_business_details: CustomerToBusinessPaymentInputDetails,
-    ) -> CustomerToBusinessPaymentResponseData {
+    ) -> std::result::Result<
+        (
+            CustomerToBusinessPaymentResponseData,
+            CustomerToBusinessPaymentErrorResponseData,
+        ),
+        reqwest::Error,
+    > {
         let _output = self.get_auth_token();
         let access_token: String = _output.await;
         let api_url = &self.stk_push_url;
@@ -248,6 +283,17 @@ impl MpesaGateway {
             ResponseDescription: None,
             CustomerMessage: None,
         };
+
+        let customer_to_business_error_response_data = CustomerToBusinessPaymentErrorResponseData {
+            requestId: None,
+            errorCode: None,
+            errorMessage: None,
+        };
+
+        let my_output = (
+            customer_to_business_response_data,
+            customer_to_business_error_response_data,
+        );
 
         if access_token.is_empty()
             || api_url.is_empty()
@@ -271,9 +317,18 @@ impl MpesaGateway {
             };
             return b;
             */
-            return customer_to_business_response_data;
+            return Ok(my_output);
         }
 
+        let _result = customer_to_business_payment(
+            customer_to_business_details,
+            access_token,
+            api_url.to_string(),
+        )
+        .await;
+
+        _result
+        /*
         let _result = customer_to_business_payment(
             customer_to_business_details,
             access_token,
@@ -301,22 +356,41 @@ impl MpesaGateway {
             };
 
         customer_to_business_response_data
+        */
     }
 
     pub async fn get_business_paybill(
         &self,
         business_paybill_details: BusinessPayBillInputDetails,
-    ) -> BusinessPayBillResponseData {
+    ) -> std::result::Result<
+        (
+            BusinessPayBillResponseData,
+            BusinessPayBillErrorResponseData,
+        ),
+        reqwest::Error,
+    > {
         let _output = self.get_auth_token();
         let access_token: String = _output.await;
         let api_url = &self.b2b_payment_request_url;
         //println!("access_token: {:?}", &access_token);
+
         let business_paybill_response_data = BusinessPayBillResponseData {
             OriginatorConversationID: None,
             ConversationID: None,
             ResponseCode: None,
             ResponseDescription: None,
         };
+
+        let business_paybill_error_response_data = BusinessPayBillErrorResponseData {
+            requestId: None,
+            errorCode: None,
+            errorMessage: None,
+        };
+
+        let my_output = (
+            business_paybill_response_data,
+            business_paybill_error_response_data,
+        );
 
         if access_token.is_empty()
             || api_url.is_empty()
@@ -339,9 +413,14 @@ impl MpesaGateway {
             };
             return b;
             */
-            return business_paybill_response_data;
+            return Ok(my_output);
         }
 
+        let _result =
+            business_paybill(business_paybill_details, access_token, api_url.to_string()).await;
+
+        _result
+        /*
         let _result =
             business_paybill(business_paybill_details, access_token, api_url.to_string()).await;
 
@@ -363,12 +442,19 @@ impl MpesaGateway {
         };
 
         business_paybill_response_data
+        */
     }
 
     pub async fn get_business_buy_goods(
         &self,
         business_buy_goods_details: BusinessBuyGoodsInputDetails,
-    ) -> BusinessBuyGoodsResponseData {
+    ) -> std::result::Result<
+        (
+            BusinessBuyGoodsResponseData,
+            BusinessBuyGoodsErrorResponseData,
+        ),
+        reqwest::Error,
+    > {
         let _output = self.get_auth_token();
         let access_token: String = _output.await;
         let api_url = &self.b2b_payment_request_url;
@@ -379,6 +465,17 @@ impl MpesaGateway {
             ResponseCode: None,
             ResponseDescription: None,
         };
+
+        let business_buy_goods_error_response_data = BusinessBuyGoodsErrorResponseData {
+            requestId: None,
+            errorCode: None,
+            errorMessage: None,
+        };
+
+        let my_output = (
+            business_buy_goods_response_data,
+            business_buy_goods_error_response_data,
+        );
 
         if access_token.is_empty()
             || api_url.is_empty()
@@ -401,7 +498,7 @@ impl MpesaGateway {
             };
             return b;
             */
-            return business_buy_goods_response_data;
+            return Ok(my_output);
         }
 
         let _result = business_buy_goods(
@@ -411,6 +508,8 @@ impl MpesaGateway {
         )
         .await;
 
+        _result
+        /*
         let business_buy_goods_response_data: BusinessBuyGoodsResponseData = match _result {
             Ok(a) => a,
             Err(e) => {
@@ -429,6 +528,7 @@ impl MpesaGateway {
         };
 
         business_buy_goods_response_data
+        */
     }
 }
 
@@ -575,8 +675,13 @@ pub async fn business_to_customer(
     business_to_customer_details: BusinessToCustomerInputDetails,
     access_token: String,
     api_url: String,
-) -> std::result::Result<BusinessToCustomerResponseData, reqwest::Error> {
-    //let api_url: String = business_to_customer_details.api_url;
+) -> std::result::Result<
+    (
+        BusinessToCustomerResponseData,
+        BusinessToCustomerErrorResponseData,
+    ),
+    reqwest::Error,
+> {
     let initiator_name: String = business_to_customer_details.initiator_name;
     let security_credential: String = business_to_customer_details.security_credential;
     let command_id: String = business_to_customer_details.command_id;
@@ -601,12 +706,19 @@ pub async fn business_to_customer(
         Occassion: _occassion,
     };
 
-    let mut business_to_customer_response_data = BusinessToCustomerResponseData {
+    let business_to_customer_response_data = BusinessToCustomerResponseData {
         OriginatorConversationID: None,
         ConversationID: None,
         ResponseCode: None,
         ResponseDescription: None,
     };
+
+    let business_to_customer_error_response_data = BusinessToCustomerErrorResponseData {
+        requestId: None,
+        errorCode: None,
+        errorMessage: None,
+    };
+
     /*
     println!("access_token: {:?}", &access_token);
     println!(
@@ -617,7 +729,7 @@ pub async fn business_to_customer(
     let client = reqwest::Client::new();
     // "%Y-%m-%d %H:%M:%S" i.e "yyyy-MM-dd HH:mm:ss"
     // "%Y-%m-%d %H:%M:%S%.3f" i.e "yyyy-MM-dd HH:mm:ss.SSS"
-    let date_to_mpesa = Local::now().format("%Y-%m-%d %H:%M:%S%.3f").to_string();
+    //let date_to_mpesa = Local::now().format("%Y-%m-%d %H:%M:%S%.3f").to_string();
     let res = client
         .post(api_url)
         .header(CONTENT_TYPE, "application/json")
@@ -632,26 +744,46 @@ pub async fn business_to_customer(
         Err(e) => {
             //println!("server not responding");
             println!("server not responding: {:?}", e.to_string());
+            return Err(e);
         }
         Ok(response) => {
             match response.status() {
                 StatusCode::OK => {
-                    let date_from_mpesa = Local::now().format("%Y-%m-%d %H:%M:%S%.3f").to_string();
-                    let k = String::from(""); //Default value.
+                    //let date_from_mpesa = Local::now().format("%Y-%m-%d %H:%M:%S%.3f").to_string();
+                    //let k = String::from(""); //Default value.
 
-                    let my_output = response.json::<BusinessToCustomerResponseData>().await?;
-
-                    let originator_conversation_id =
-                        &my_output.OriginatorConversationID.as_ref().unwrap_or(&k);
-                    let conversation_id = &my_output.ConversationID.as_ref().unwrap_or(&k);
-                    let response_code = &my_output.ResponseCode.as_ref().unwrap_or(&k);
-                    let response_description =
-                        &my_output.ResponseDescription.as_ref().unwrap_or(&k);
+                    let business_to_customer_response_data =
+                        response.json::<BusinessToCustomerResponseData>().await?;
+                    /*
+                    let originator_conversation_id = &business_to_customer_response_data
+                        .OriginatorConversationID
+                        .as_ref()
+                        .unwrap_or(&k);
+                    let conversation_id = &business_to_customer_response_data
+                        .ConversationID
+                        .as_ref()
+                        .unwrap_or(&k);
+                    let response_code = &business_to_customer_response_data
+                        .ResponseCode
+                        .as_ref()
+                        .unwrap_or(&k);
+                    let response_description = &business_to_customer_response_data
+                        .ResponseDescription
+                        .as_ref()
+                        .unwrap_or(&k);
                     let request_id = String::from("");
                     let error_code = String::from("");
                     let error_message = String::from("");
+                    */
 
-                    //
+                    let my_output = (
+                        business_to_customer_response_data,
+                        business_to_customer_error_response_data,
+                    );
+
+                    return Ok(my_output);
+
+                    /*
                     business_to_customer_response_data.OriginatorConversationID =
                         Some(originator_conversation_id.to_string());
                     business_to_customer_response_data.ConversationID =
@@ -660,6 +792,9 @@ pub async fn business_to_customer(
                         Some(response_code.to_string());
                     business_to_customer_response_data.ResponseDescription =
                         Some(response_description.to_string());
+
+                    */
+
                     /*
                     println!(
                         "business_to_customer_response_data: {:?}",
@@ -687,20 +822,38 @@ pub async fn business_to_customer(
                     */
                 }
                 s => {
-                    let date_from_mpesa = Local::now().format("%Y-%m-%d %H:%M:%S%.3f").to_string();
-                    let k = String::from(""); //Default value.
-                    let my_output = response
+                    //let date_from_mpesa = Local::now().format("%Y-%m-%d %H:%M:%S%.3f").to_string();
+                    //let k = String::from(""); //Default value.
+                    let business_to_customer_error_response_data = response
                         .json::<BusinessToCustomerErrorResponseData>()
                         .await?;
-                    let request_id = &my_output.requestId.as_ref().unwrap_or(&k);
-                    let error_code = &my_output.errorCode.as_ref().unwrap_or(&k);
-                    let error_message = &my_output.errorMessage.as_ref().unwrap_or(&k);
+                    /*
+                    let request_id = &business_to_customer_error_response_data.requestId.as_ref().unwrap_or(&k);
+                    let error_code = &business_to_customer_error_response_data.errorCode.as_ref().unwrap_or(&k);
+                    let error_message = &business_to_customer_error_response_data.errorMessage.as_ref().unwrap_or(&k);
                     let originator_conversation_id = String::from("");
                     let conversation_id = String::from("");
                     let response_code = String::from("");
                     let response_description = String::from("");
 
-                    println!("my_output: {:?}", &my_output);
+                    println!("business_to_customer_error_response_data: {:?}", &business_to_customer_error_response_data);
+
+                    business_to_customer_response_data.OriginatorConversationID =
+                        Some(originator_conversation_id.to_string());
+                    business_to_customer_response_data.ConversationID =
+                        Some(request_id.to_string());
+                    business_to_customer_response_data.ResponseCode = Some(error_code.to_string());
+                    business_to_customer_response_data.ResponseDescription =
+                        Some(error_message.to_string());
+                    */
+
+                    let my_output = (
+                        business_to_customer_response_data,
+                        business_to_customer_error_response_data,
+                    );
+
+                    return Ok(my_output);
+
                     /*
                     create_b2c_acknowledgement(
                         &data,
@@ -724,7 +877,12 @@ pub async fn business_to_customer(
         }
     };
 
-    Ok(business_to_customer_response_data)
+    let my_output = (
+        business_to_customer_response_data,
+        business_to_customer_error_response_data,
+    );
+
+    Ok(my_output)
 }
 
 // network initiated push
@@ -732,8 +890,13 @@ pub async fn customer_to_business_payment(
     customer_to_business_payment_details: CustomerToBusinessPaymentInputDetails,
     access_token: String,
     api_url: String,
-) -> std::result::Result<CustomerToBusinessPaymentResponseData, reqwest::Error> {
-    //let api_url: String = customer_to_business_payment_details.api_url;
+) -> std::result::Result<
+    (
+        CustomerToBusinessPaymentResponseData,
+        CustomerToBusinessPaymentErrorResponseData,
+    ),
+    reqwest::Error,
+> {
     let business_short_code: String = customer_to_business_payment_details.business_short_code;
     let _password: String = customer_to_business_payment_details._password;
     let time_stamp: String = customer_to_business_payment_details.time_stamp;
@@ -760,12 +923,18 @@ pub async fn customer_to_business_payment(
         TransactionDesc: transaction_desc,
     };
 
-    let mut customer_to_business_response_data = CustomerToBusinessPaymentResponseData {
+    let customer_to_business_response_data = CustomerToBusinessPaymentResponseData {
         MerchantRequestID: None,
         CheckoutRequestID: None,
         ResponseCode: None,
         ResponseDescription: None,
         CustomerMessage: None,
+    };
+
+    let customer_to_business_error_response_data = CustomerToBusinessPaymentErrorResponseData {
+        requestId: None,
+        errorCode: None,
+        errorMessage: None,
     };
 
     /*
@@ -794,11 +963,23 @@ pub async fn customer_to_business_payment(
         Err(e) => {
             //println!("server not responding");
             println!("server not responding: {:?}", e.to_string());
+            return Err(e);
         }
         Ok(response) => {
             match response.status() {
                 StatusCode::OK => {
-                    let date_from_mpesa = Local::now().format("%Y-%m-%d %H:%M:%S%.3f").to_string();
+                    let customer_to_business_response_data = response
+                        .json::<CustomerToBusinessPaymentResponseData>()
+                        .await?;
+
+                    let my_output = (
+                        customer_to_business_response_data,
+                        customer_to_business_error_response_data,
+                    );
+
+                    return Ok(my_output);
+                    //let date_from_mpesa = Local::now().format("%Y-%m-%d %H:%M:%S%.3f").to_string();
+                    /*
                     let k = String::from(""); //Default value.
                     let m: u32 = 0; //Default value.
 
@@ -824,6 +1005,7 @@ pub async fn customer_to_business_payment(
                         Some(response_description.to_string());
                     customer_to_business_response_data.CustomerMessage =
                         Some(customer_message.to_string());
+                    */
                     /*
                     println!(
                         "business_to_customer_response_data: {:?}",
@@ -851,7 +1033,19 @@ pub async fn customer_to_business_payment(
                     */
                 }
                 s => {
-                    let date_from_mpesa = Local::now().format("%Y-%m-%d %H:%M:%S%.3f").to_string();
+                    let customer_to_business_error_response_data = response
+                        .json::<CustomerToBusinessPaymentErrorResponseData>()
+                        .await?;
+
+                    let my_output = (
+                        customer_to_business_response_data,
+                        customer_to_business_error_response_data,
+                    );
+
+                    return Ok(my_output);
+
+                    //let date_from_mpesa = Local::now().format("%Y-%m-%d %H:%M:%S%.3f").to_string();
+                    /*
                     let k = String::from(""); //Default value.
                     let m: u32 = 0; //Default value.
                     let my_output = response
@@ -876,6 +1070,7 @@ pub async fn customer_to_business_payment(
                     customer_to_business_response_data.ResponseDescription =
                         Some(response_description);
                     customer_to_business_response_data.CustomerMessage = Some(customer_message);
+                    */
 
                     //println!("my_output: {:?}", &my_output);
 
@@ -902,15 +1097,25 @@ pub async fn customer_to_business_payment(
         }
     };
 
-    Ok(customer_to_business_response_data)
+    let my_output = (
+        customer_to_business_response_data,
+        customer_to_business_error_response_data,
+    );
+
+    Ok(my_output)
 }
 
 pub async fn business_paybill(
     business_paybill_details: BusinessPayBillInputDetails,
     access_token: String,
     api_url: String,
-) -> std::result::Result<BusinessPayBillResponseData, reqwest::Error> {
-    //let api_url: String = business_paybill_details.api_url;
+) -> std::result::Result<
+    (
+        BusinessPayBillResponseData,
+        BusinessPayBillErrorResponseData,
+    ),
+    reqwest::Error,
+> {
     let _initiator: String = business_paybill_details._initiator;
     let security_credential: String = business_paybill_details.security_credential;
     let command_id: String = business_paybill_details.command_id;
@@ -941,11 +1146,17 @@ pub async fn business_paybill(
         ResultURL: result_url,
     };
 
-    let mut business_paybill_response_data = BusinessPayBillResponseData {
+    let business_paybill_response_data = BusinessPayBillResponseData {
         OriginatorConversationID: None,
         ConversationID: None,
         ResponseCode: None,
         ResponseDescription: None,
+    };
+
+    let business_paybill_error_response_data = BusinessPayBillErrorResponseData {
+        requestId: None,
+        errorCode: None,
+        errorMessage: None,
     };
 
     /*
@@ -974,10 +1185,21 @@ pub async fn business_paybill(
         Err(e) => {
             //println!("server not responding");
             println!("server not responding: {:?}", e.to_string());
+            return Err(e);
         }
         Ok(response) => {
             match response.status() {
                 StatusCode::OK => {
+                    let business_paybill_response_data =
+                        response.json::<BusinessPayBillResponseData>().await?;
+
+                    let my_output = (
+                        business_paybill_response_data,
+                        business_paybill_error_response_data,
+                    );
+
+                    return Ok(my_output);
+                    /*
                     let date_from_mpesa = Local::now().format("%Y-%m-%d %H:%M:%S%.3f").to_string();
                     let k = String::from(""); //Default value.
                     let m: u32 = 0; //Default value.
@@ -999,6 +1221,7 @@ pub async fn business_paybill(
                     business_paybill_response_data.ResponseCode = Some(response_code.to_string());
                     business_paybill_response_data.ResponseDescription =
                         Some(response_description.to_string());
+                    */
                     /*
                     println!(
                         "business_to_customer_response_data: {:?}",
@@ -1026,6 +1249,16 @@ pub async fn business_paybill(
                     */
                 }
                 s => {
+                    let business_paybill_error_response_data =
+                        response.json::<BusinessPayBillErrorResponseData>().await?;
+
+                    let my_output = (
+                        business_paybill_response_data,
+                        business_paybill_error_response_data,
+                    );
+
+                    return Ok(my_output);
+                    /*
                     let date_from_mpesa = Local::now().format("%Y-%m-%d %H:%M:%S%.3f").to_string();
                     let k = String::from(""); //Default value.
                     let m: u32 = 0; //Default value.
@@ -1047,6 +1280,7 @@ pub async fn business_paybill(
                     business_paybill_response_data.ResponseCode = Some(response_code.to_string());
                     business_paybill_response_data.ResponseDescription =
                         Some(response_description.to_string());
+                    */
 
                     //println!("my_output: {:?}", &my_output);
 
@@ -1073,15 +1307,25 @@ pub async fn business_paybill(
         }
     };
 
-    Ok(business_paybill_response_data)
+    let my_output = (
+        business_paybill_response_data,
+        business_paybill_error_response_data,
+    );
+
+    Ok(my_output)
 }
 
 async fn business_buy_goods(
     business_buy_goods_details: BusinessBuyGoodsInputDetails,
     access_token: String,
     api_url: String,
-) -> std::result::Result<BusinessBuyGoodsResponseData, reqwest::Error> {
-    //let api_url: String = business_buy_goods_details.api_url;
+) -> std::result::Result<
+    (
+        BusinessBuyGoodsResponseData,
+        BusinessBuyGoodsErrorResponseData,
+    ),
+    reqwest::Error,
+> {
     let _initiator: String = business_buy_goods_details._initiator;
     let security_credential: String = business_buy_goods_details.security_credential;
     let command_id: String = business_buy_goods_details.command_id;
@@ -1112,11 +1356,17 @@ async fn business_buy_goods(
         ResultURL: result_url,
     };
 
-    let mut business_buy_goods_response_data = BusinessBuyGoodsResponseData {
+    let business_buy_goods_response_data = BusinessBuyGoodsResponseData {
         OriginatorConversationID: None,
         ConversationID: None,
         ResponseCode: None,
         ResponseDescription: None,
+    };
+
+    let business_buy_goods_error_response_data = BusinessBuyGoodsErrorResponseData {
+        requestId: None,
+        errorCode: None,
+        errorMessage: None,
     };
 
     /*
@@ -1145,10 +1395,21 @@ async fn business_buy_goods(
         Err(e) => {
             //println!("server not responding");
             println!("server not responding: {:?}", e.to_string());
+            return Err(e);
         }
         Ok(response) => {
             match response.status() {
                 StatusCode::OK => {
+                    let business_buy_goods_response_data =
+                        response.json::<BusinessBuyGoodsResponseData>().await?;
+
+                    let my_output = (
+                        business_buy_goods_response_data,
+                        business_buy_goods_error_response_data,
+                    );
+
+                    return Ok(my_output);
+                    /*
                     let date_from_mpesa = Local::now().format("%Y-%m-%d %H:%M:%S%.3f").to_string();
                     let k = String::from(""); //Default value.
                     let m: u32 = 0; //Default value.
@@ -1170,6 +1431,7 @@ async fn business_buy_goods(
                     business_buy_goods_response_data.ResponseCode = Some(response_code.to_string());
                     business_buy_goods_response_data.ResponseDescription =
                         Some(response_description.to_string());
+                    */
                     /*
                     println!(
                         "business_to_customer_response_data: {:?}",
@@ -1197,6 +1459,16 @@ async fn business_buy_goods(
                     */
                 }
                 s => {
+                    let business_buy_goods_error_response_data =
+                        response.json::<BusinessBuyGoodsErrorResponseData>().await?;
+
+                    let my_output = (
+                        business_buy_goods_response_data,
+                        business_buy_goods_error_response_data,
+                    );
+
+                    return Ok(my_output);
+                    /*
                     let date_from_mpesa = Local::now().format("%Y-%m-%d %H:%M:%S%.3f").to_string();
                     let k = String::from(""); //Default value.
                     let m: u32 = 0; //Default value.
@@ -1218,6 +1490,7 @@ async fn business_buy_goods(
                     business_buy_goods_response_data.ResponseCode = Some(response_code.to_string());
                     business_buy_goods_response_data.ResponseDescription =
                         Some(response_description.to_string());
+                    */
 
                     //println!("my_output: {:?}", &my_output);
 
@@ -1244,5 +1517,10 @@ async fn business_buy_goods(
         }
     };
 
-    Ok(business_buy_goods_response_data)
+    let my_output = (
+        business_buy_goods_response_data,
+        business_buy_goods_error_response_data,
+    );
+
+    Ok(my_output)
 }
