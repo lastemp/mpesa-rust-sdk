@@ -449,3 +449,59 @@ pub struct BusinessBuyGoodsInputDetails {
     pub queue_time_out_url: String,
     pub result_url: String,
 }
+
+#[derive(Debug)]
+pub struct B2CResultParametersOutputDetails {
+    pub TransactionAmount: f32,
+    pub TransactionReceipt: String,
+    pub B2CRecipientIsRegisteredCustomer: String,
+    pub B2CChargesPaidAccountAvailableFunds: f32,
+    pub ReceiverPartyPublicName: String,
+    pub TransactionCompletedDateTime: String,
+    pub B2CUtilityAccountAvailableFunds: f32,
+    pub B2CWorkingAccountAvailableFunds: f32,
+}
+
+#[derive(Debug)]
+pub struct C2BPaymentResultParametersOutputDetails {
+    pub Amount: f32,
+    pub MpesaReceiptNumber: String,
+    pub TransactionDate: String,
+    pub PhoneNumber: String,
+}
+
+#[derive(Debug)]
+pub struct BusinessPayBillResultParametersOutputDetails {
+    pub DebitAccountBalance: String,
+    pub Amount: String,
+    pub DebitPartyAffectedAccountBalance: String,
+    pub TransCompletedTime: String,
+    pub DebitPartyCharges: String,
+    pub ReceiverPartyPublicName: String,
+    pub Currency: String,
+    pub InitiatorAccountCurrentBalance: String,
+}
+
+#[derive(Debug)]
+pub struct BusinessPayBillReferenceItemOutputDetails {
+    pub BillReferenceNumber: String,
+    pub QueueTimeoutURL: String,
+}
+
+#[derive(Debug)]
+pub struct BusinessBuyGoodsResultParametersOutputDetails {
+    pub DebitAccountBalance: String,
+    pub Amount: String,
+    pub DebitPartyAffectedAccountBalance: String,
+    pub TransCompletedTime: String,
+    pub DebitPartyCharges: String,
+    pub ReceiverPartyPublicName: String,
+    pub Currency: String,
+    pub InitiatorAccountCurrentBalance: String,
+}
+
+#[derive(Debug)]
+pub struct BusinessBuyGoodsReferenceItemOutputDetails {
+    pub BillReferenceNumber: String,
+    pub QueueTimeoutURL: String,
+}

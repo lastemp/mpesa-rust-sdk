@@ -12,7 +12,7 @@ use crate::{
         BusinessToCustomerResponseData, C2bData, ConfirmationResponseData,
         CustomerToBusinessPaymentErrorResponseData, CustomerToBusinessPaymentInputDetails,
         CustomerToBusinessPaymentResponseData, CustomerToBusinessPaymentResultData, ItemDetails,
-        MixedTypeValue, RegisterUrlInputDetails, ValidationResponseData,
+        MixedTypeValue, RegisterUrlInputDetails, RegisterUrlResponseData, ValidationResponseData,
     },
     persistence::{
         create_incoming_c2b_mpesa_confirmation_requests,
@@ -41,7 +41,7 @@ const TRANSACTION_OCCASSION: &str = "Performance payment fees";
 pub(crate) async fn index() -> impl Responder {
     format!("")
 }
-
+/*
 #[get("/generateauth")]
 pub(crate) async fn generate_auth(data: web::Data<Pool>) -> impl Responder {
     //let api_key = get_api_key(&data);
@@ -74,7 +74,7 @@ pub(crate) async fn generate_auth(data: web::Data<Pool>) -> impl Responder {
     */
     format!("")
 }
-
+*/
 #[get("/registerclienturls")]
 pub(crate) async fn register_client_urls(data: web::Data<Pool>) -> impl Responder {
     let register_url_details = get_register_url_details(&data);
@@ -102,7 +102,25 @@ pub(crate) async fn register_client_urls(data: web::Data<Pool>) -> impl Responde
         b2b_payment_request_url,
     );
     let _output = mpesa_gateway.get_register_url(register_url_details);
+    /*
     let register_url_response_data = _output.await;
+    */
+    let _result: std::result::Result<RegisterUrlResponseData, reqwest::Error> = _output.await;
+
+    let (register_url_response_data, error_data) = match _result {
+        Ok(a) => (a, None),
+        Err(e) => {
+            println!("server not responding: {:?}", e.to_string());
+            let a = RegisterUrlResponseData {
+                OriginatorCoversationID: None,
+                ConversationID: None,
+                ResponseDescription: None,
+            };
+
+            (a, Some(e))
+        }
+    };
+
     println!(
         "register_url_response_data: {:?}",
         &register_url_response_data
@@ -183,15 +201,7 @@ pub(crate) async fn process_b2c(data: web::Data<Pool>) -> impl Responder {
 
     let (business_to_customer_response_data, business_to_customer_error_response_data, error_data) =
         match _result {
-            //Ok(x) => (x, None),
             Ok(x) => {
-                /*
-                match x {
-                    a: BusinessToCustomerResponseData => a,
-                    b: BusinessToCustomerErrorResponseData => b,
-                    _ => c,
-                }
-                */
                 let (a, b) = x;
                 (a, b, None)
             }
@@ -354,7 +364,7 @@ pub(crate) async fn process_business_paybill(data: web::Data<Pool>) -> impl Resp
     let stk_push_url: String = String::from("");
     let b2b_payment_request_url: String =
         String::from("https://sandbox.safaricom.co.ke/mpesa/b2b/v1/paymentrequest");
-    let _initiator: String = String::from("testapi");
+    let _initiator: String = String::from("test***");
     let security_credential: String = String::from("***");
     let command_id: String = String::from("BusinessPayBill");
     let sender_identifier_type: String = String::from("4");
@@ -460,7 +470,7 @@ pub(crate) async fn process_business_buy_goods(data: web::Data<Pool>) -> impl Re
     let stk_push_url: String = String::from("");
     let b2b_payment_request_url: String =
         String::from("https://sandbox.safaricom.co.ke/mpesa/b2b/v1/paymentrequest");
-    let _initiator: String = String::from("testapi");
+    let _initiator: String = String::from("test***");
     let security_credential: String = String::from("***");
     let command_id: String = String::from("BusinessBuyGoods");
     let sender_identifier_type: String = String::from("4");
@@ -614,6 +624,28 @@ pub(crate) async fn get_b2c_result(
     let reference_item = &result_data.Result.ReferenceData.ReferenceItem;
     let queue_timeout_url = &reference_item.Value;
 
+    let consumer_key: String = get_settings_details(&data, String::from("consumerkeympesa"));
+    let consumer_secret: String = get_settings_details(&data, String::from("consumersecretmpesa"));
+    let auth_token_url: String = get_settings_details(&data, String::from("authtokenurlmpesa"));
+    let register_url: String = String::from("");
+    let b2c_payment_request_url: String = String::from("");
+    let stk_push_url: String = String::from("");
+    let b2b_payment_request_url: String = String::from("");
+
+    let mpesa_gateway: MpesaGateway = MpesaGateway::new(
+        consumer_key,
+        consumer_secret,
+        auth_token_url,
+        register_url,
+        b2c_payment_request_url,
+        stk_push_url,
+        b2b_payment_request_url,
+    );
+
+    let b2c_result_parameters_output_details =
+        mpesa_gateway.get_b2c_result_parameters_output_details(result_parameters);
+
+    /*
     for result_parameter in result_parameters.ResultParameter.iter() {
         let _key = &result_parameter.Key;
         let _value = &result_parameter.Value;
@@ -722,37 +754,19 @@ pub(crate) async fn get_b2c_result(
             }
         }
     }
+    */
 
-    if transaction_id.replace(" ", "").trim().len() > 0
-        && transaction_receipt.replace(" ", "").trim().len() > 0
-    {
-        // Lets insert each entry
-        /*
-        create_b2c_result(
-            &data,
-            *result_type,
-            *result_code,
-            result_desc.to_string(),
-            originator_conversation_id.to_string(),
-            conversation_id.to_string(),
-            transaction_id.to_string(),
-            transaction_amount,
-            transaction_receipt.to_string(),
-            b2c_recipient_is_registered_customer.to_string(),
-            b2c_charges_paid_account_available_funds,
-            receiver_party_public_name.to_string(),
-            transaction_completed_date_time.to_string(),
-            b2c_utility_account_available_funds,
-            b2c_working_account_available_funds,
-            queue_timeout_url.to_string(),
-        );
-        */
-        println!("result_desc: {:?}", &result_desc);
-        println!(
-            "originator_conversation_id: {:?}",
-            &originator_conversation_id
-        );
-    }
+    println!(
+        "b2c_result_parameters_output_details: {:?}",
+        &b2c_result_parameters_output_details
+    );
+
+    println!("result_desc: {:?}", &result_desc);
+
+    println!(
+        "originator_conversation_id: {:?}",
+        &originator_conversation_id
+    );
 
     format!("")
 }
@@ -773,6 +787,7 @@ pub(crate) async fn get_c2bpayment_result(
         Value: MixedTypeValue::StringValue(String::from("")),
     };
     */
+    /*
     let item_details_1 = ItemDetails {
         Name: String::from("Amount"),
         Value: MixedTypeValue::FloatValue(150.00),
@@ -784,6 +799,7 @@ pub(crate) async fn get_c2bpayment_result(
     let mut my_item = Vec::new();
     my_item.push(item_details_1);
     my_item.push(item_details_2);
+    */
     let list_of_items = &callback_meta_data.Item;
     //let list_of_items = &callback_meta_data.Item.as_ref.unwrap_or(&my_item);
     println!("merchant_request_id: {:?}", &merchant_request_id);
@@ -798,6 +814,25 @@ pub(crate) async fn get_c2bpayment_result(
     let mut transaction_date = String::from("");
     let mut phone_number = String::from("");
 
+    let consumer_key: String = get_settings_details(&data, String::from("consumerkeympesa"));
+    let consumer_secret: String = get_settings_details(&data, String::from("consumersecretmpesa"));
+    let auth_token_url: String = get_settings_details(&data, String::from("authtokenurlmpesa"));
+    let register_url: String = String::from("");
+    let b2c_payment_request_url: String = String::from("");
+    let stk_push_url: String = String::from("");
+    let b2b_payment_request_url: String = String::from("");
+
+    let mpesa_gateway: MpesaGateway = MpesaGateway::new(
+        consumer_key,
+        consumer_secret,
+        auth_token_url,
+        register_url,
+        b2c_payment_request_url,
+        stk_push_url,
+        b2b_payment_request_url,
+    );
+
+    /*
     for _item in list_of_items.iter() {
         let _name = &_item.Name;
         let _value = &_item.Value;
@@ -880,6 +915,15 @@ pub(crate) async fn get_c2bpayment_result(
         println!("transaction_date: {:?}", &transaction_date);
         println!("phone_number: {:?}", &phone_number);
     }
+    */
+
+    let c2b_payment_result_parameters_output_details =
+        mpesa_gateway.get_c2b_payment_result_parameters_output_details(list_of_items);
+
+    println!(
+        "c2b_payment_result_parameters_output_details: {:?}",
+        &c2b_payment_result_parameters_output_details
+    );
 
     format!("")
 }
@@ -896,6 +940,7 @@ pub(crate) async fn get_business_paybill_result(
     let conversation_id = &result_data.Result.ConversationID;
     let transaction_id = &result_data.Result.TransactionID;
     let result_parameters = &result_data.Result.ResultParameters;
+    let reference_data = &result_data.Result.ReferenceData;
     let mut debit_account_balance = String::from("");
     let mut transaction_amount = String::from("");
     let mut debit_party_affected_account_balance = String::from("");
@@ -907,6 +952,25 @@ pub(crate) async fn get_business_paybill_result(
     let mut bill_reference_number = String::from("");
     let mut queue_timeout_url = String::from("");
 
+    let consumer_key: String = get_settings_details(&data, String::from("consumerkeympesa"));
+    let consumer_secret: String = get_settings_details(&data, String::from("consumersecretmpesa"));
+    let auth_token_url: String = get_settings_details(&data, String::from("authtokenurlmpesa"));
+    let register_url: String = String::from("");
+    let b2c_payment_request_url: String = String::from("");
+    let stk_push_url: String = String::from("");
+    let b2b_payment_request_url: String = String::from("");
+
+    let mpesa_gateway: MpesaGateway = MpesaGateway::new(
+        consumer_key,
+        consumer_secret,
+        auth_token_url,
+        register_url,
+        b2c_payment_request_url,
+        stk_push_url,
+        b2b_payment_request_url,
+    );
+
+    /*
     for result_parameter in result_parameters.ResultParameter.iter() {
         let _key = &result_parameter.Key;
         let _value = &result_parameter.Value;
@@ -1007,7 +1071,11 @@ pub(crate) async fn get_business_paybill_result(
             }
         }
     }
+    */
 
+    let business_paybill_result_parameters_output_details =
+        mpesa_gateway.get_business_paybill_result_parameters_output_details(result_parameters);
+    /*
     for reference_item in result_data.Result.ReferenceData.ReferenceItem.iter() {
         let _key = &reference_item.Key;
         let _value = &reference_item.Value;
@@ -1036,7 +1104,21 @@ pub(crate) async fn get_business_paybill_result(
             }
         }
     }
+    */
+    let business_paybill_Reference_item_output_details =
+        mpesa_gateway.get_business_paybill_Reference_item_output_details(reference_data);
 
+    println!(
+        "business_paybill_result_parameters_output_details: {:?}",
+        &business_paybill_result_parameters_output_details
+    );
+
+    println!(
+        "business_paybill_Reference_item_output_details: {:?}",
+        &business_paybill_Reference_item_output_details
+    );
+
+    /*
     if bill_reference_number.replace(" ", "").trim().len() > 0 {
         // Lets insert each entry
         /*
@@ -1068,6 +1150,12 @@ pub(crate) async fn get_business_paybill_result(
         );
         println!("conversation_id: {:?}", &conversation_id);
         println!("transaction_id: {:?}", &transaction_id);
+
+        println!(
+            "business_paybill_result_parameters_output_details: {:?}",
+            &business_paybill_result_parameters_output_details
+        );
+        /*
         println!("debit_account_balance: {:?}", &debit_account_balance);
         println!("transaction_amount: {:?}", &transaction_amount);
         println!(
@@ -1085,10 +1173,11 @@ pub(crate) async fn get_business_paybill_result(
             "initiator_account_current_balance: {:?}",
             &initiator_account_current_balance
         );
+        */
         println!("bill_reference_number: {:?}", &bill_reference_number);
         println!("queue_timeout_url: {:?}", &queue_timeout_url);
     }
-
+    */
     format!("")
 }
 
@@ -1104,6 +1193,7 @@ pub(crate) async fn get_business_buy_goods_result(
     let conversation_id = &result_data.Result.ConversationID;
     let transaction_id = &result_data.Result.TransactionID;
     let result_parameters = &result_data.Result.ResultParameters;
+    let reference_data = &result_data.Result.ReferenceData;
     let mut debit_account_balance = String::from("");
     let mut transaction_amount = String::from("");
     let mut debit_party_affected_account_balance = String::from("");
@@ -1115,6 +1205,41 @@ pub(crate) async fn get_business_buy_goods_result(
     let mut bill_reference_number = String::from("");
     let mut queue_timeout_url = String::from("");
 
+    let consumer_key: String = get_settings_details(&data, String::from("consumerkeympesa"));
+    let consumer_secret: String = get_settings_details(&data, String::from("consumersecretmpesa"));
+    let auth_token_url: String = get_settings_details(&data, String::from("authtokenurlmpesa"));
+    let register_url: String = String::from("");
+    let b2c_payment_request_url: String = String::from("");
+    let stk_push_url: String = String::from("");
+    let b2b_payment_request_url: String = String::from("");
+
+    let mpesa_gateway: MpesaGateway = MpesaGateway::new(
+        consumer_key,
+        consumer_secret,
+        auth_token_url,
+        register_url,
+        b2c_payment_request_url,
+        stk_push_url,
+        b2b_payment_request_url,
+    );
+
+    let business_buy_goods_result_parameters_output_details =
+        mpesa_gateway.get_business_buy_goods_result_parameters_output_details(result_parameters);
+
+    let business_buy_goods_reference_item_output_details =
+        mpesa_gateway.get_business_buy_goods_reference_item_output_details(reference_data);
+
+    println!(
+        "business_buy_goods_result_parameters_output_details: {:?}",
+        &business_buy_goods_result_parameters_output_details
+    );
+
+    println!(
+        "business_buy_goods_reference_item_output_details: {:?}",
+        &business_buy_goods_reference_item_output_details
+    );
+
+    /*
     for result_parameter in result_parameters.ResultParameter.iter() {
         let _key = &result_parameter.Key;
         let _value = &result_parameter.Value;
@@ -1244,7 +1369,9 @@ pub(crate) async fn get_business_buy_goods_result(
             }
         }
     }
+    */
 
+    /*
     if bill_reference_number.replace(" ", "").trim().len() > 0 {
         // Lets insert each entry
         /*
@@ -1296,6 +1423,7 @@ pub(crate) async fn get_business_buy_goods_result(
         println!("bill_reference_number: {:?}", &bill_reference_number);
         println!("queue_timeout_url: {:?}", &queue_timeout_url);
     }
+    */
 
     format!("")
 }

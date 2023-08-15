@@ -6,19 +6,25 @@ use base64::{
 
 use actix_web::web;
 use chrono::prelude::*;
+use reqwest::header::HeaderMap;
 use reqwest::header::{ACCEPT, CONTENT_TYPE};
 use reqwest::StatusCode;
 use serde::{Deserialize, Serialize};
 
 use crate::models::{
-    AuthTokenResponseData, BusinessBuyGoodsData, BusinessBuyGoodsErrorResponseData,
-    BusinessBuyGoodsInputDetails, BusinessBuyGoodsResponseData, BusinessPayBillData,
-    BusinessPayBillErrorResponseData, BusinessPayBillInputDetails, BusinessPayBillResponseData,
-    BusinessToCustomerData, BusinessToCustomerErrorResponseData, BusinessToCustomerInputDetails,
-    BusinessToCustomerResponseData, CustomerToBusinessPaymentData,
-    CustomerToBusinessPaymentErrorResponseData, CustomerToBusinessPaymentInputDetails,
-    CustomerToBusinessPaymentResponseData, RegisterUrlData, RegisterUrlInputDetails,
-    RegisterUrlResponseData,
+    AuthTokenResponseData, B2CResultParametersOutputDetails, BusinessBuyGoodsData,
+    BusinessBuyGoodsErrorResponseData, BusinessBuyGoodsInputDetails, BusinessBuyGoodsReferenceItem,
+    BusinessBuyGoodsReferenceItemOutputDetails, BusinessBuyGoodsResponseData,
+    BusinessBuyGoodsResultParametersOutputDetails, BusinessPayBillData,
+    BusinessPayBillErrorResponseData, BusinessPayBillInputDetails, BusinessPayBillReferenceItem,
+    BusinessPayBillReferenceItemOutputDetails, BusinessPayBillResponseData,
+    BusinessPayBillResultParametersOutputDetails, BusinessToCustomerData,
+    BusinessToCustomerErrorResponseData, BusinessToCustomerInputDetails,
+    BusinessToCustomerResponseData, C2BPaymentResultParametersOutputDetails,
+    CustomerToBusinessPaymentData, CustomerToBusinessPaymentErrorResponseData,
+    CustomerToBusinessPaymentInputDetails, CustomerToBusinessPaymentResponseData, ItemDetails,
+    MixedTypeValue, RegisterUrlData, RegisterUrlInputDetails, RegisterUrlResponseData,
+    ResultParameter, ResultParameterDetails,
 };
 
 const AUTHORISATION_BEARER: &str = "Bearer";
@@ -72,6 +78,615 @@ impl MpesaGateway {
         api_key
     }
 
+    pub fn get_b2c_result_parameters_output_details(
+        &self,
+        result_parameters: &ResultParameter,
+    ) -> B2CResultParametersOutputDetails {
+        let mut transaction_amount: f32 = 0.0;
+        let mut transaction_receipt = String::from("");
+        let mut b2c_recipient_is_registered_customer = String::from("");
+        let mut b2c_charges_paid_account_available_funds: f32 = 0.0;
+        let mut receiver_party_public_name = String::from("");
+        let mut transaction_completed_date_time = String::from("");
+        let mut b2c_utility_account_available_funds: f32 = 0.0;
+        let mut b2c_working_account_available_funds: f32 = 0.0;
+
+        for result_parameter in result_parameters.ResultParameter.iter() {
+            let _key = &result_parameter.Key;
+            let _value = &result_parameter.Value;
+
+            //TransactionAmount
+            if _key
+                .to_string()
+                .to_lowercase()
+                .eq_ignore_ascii_case(&String::from("TransactionAmount"))
+            {
+                transaction_amount = match _value {
+                    MixedTypeValue::StringValue(s) => 0.0,
+                    MixedTypeValue::IntegerValue(i) => *i as f32,
+                    MixedTypeValue::FloatValue(f) => *f,
+                    _ => 0.0,
+                }
+            }
+
+            //TransactionReceipt
+            if _key
+                .to_string()
+                .to_lowercase()
+                .eq_ignore_ascii_case(&String::from("TransactionReceipt"))
+            {
+                transaction_receipt = match _value {
+                    MixedTypeValue::StringValue(s) => s.to_string(),
+                    _ => String::from(""),
+                }
+            }
+
+            //B2CRecipientIsRegisteredCustomer
+            if _key
+                .to_string()
+                .to_lowercase()
+                .eq_ignore_ascii_case(&String::from("B2CRecipientIsRegisteredCustomer"))
+            {
+                b2c_recipient_is_registered_customer = match _value {
+                    MixedTypeValue::StringValue(s) => s.to_string(),
+                    _ => String::from(""),
+                }
+            }
+
+            //B2CChargesPaidAccountAvailableFunds
+            if _key
+                .to_string()
+                .to_lowercase()
+                .eq_ignore_ascii_case(&String::from("B2CChargesPaidAccountAvailableFunds"))
+            {
+                b2c_charges_paid_account_available_funds = match _value {
+                    MixedTypeValue::StringValue(s) => 0.0,
+                    MixedTypeValue::IntegerValue(i) => *i as f32,
+                    MixedTypeValue::FloatValue(f) => *f,
+                    _ => 0.0,
+                }
+            }
+
+            //ReceiverPartyPublicName
+            if _key
+                .to_string()
+                .to_lowercase()
+                .eq_ignore_ascii_case(&String::from("ReceiverPartyPublicName"))
+            {
+                receiver_party_public_name = match _value {
+                    MixedTypeValue::StringValue(s) => s.to_string(),
+                    _ => String::from(""),
+                }
+            }
+
+            //TransactionCompletedDateTime
+            if _key
+                .to_string()
+                .to_lowercase()
+                .eq_ignore_ascii_case(&String::from("TransactionCompletedDateTime"))
+            {
+                transaction_completed_date_time = match _value {
+                    MixedTypeValue::StringValue(s) => s.to_string(),
+                    _ => String::from(""),
+                }
+            }
+
+            //B2CUtilityAccountAvailableFunds
+            if _key
+                .to_string()
+                .to_lowercase()
+                .eq_ignore_ascii_case(&String::from("B2CUtilityAccountAvailableFunds"))
+            {
+                b2c_utility_account_available_funds = match _value {
+                    MixedTypeValue::StringValue(s) => 0.0,
+                    MixedTypeValue::IntegerValue(i) => *i as f32,
+                    MixedTypeValue::FloatValue(f) => *f,
+                    _ => 0.0,
+                }
+            }
+
+            //B2CWorkingAccountAvailableFunds
+            if _key
+                .to_string()
+                .to_lowercase()
+                .eq_ignore_ascii_case(&String::from("B2CWorkingAccountAvailableFunds"))
+            {
+                b2c_working_account_available_funds = match _value {
+                    MixedTypeValue::StringValue(s) => 0.0,
+                    MixedTypeValue::IntegerValue(i) => *i as f32,
+                    MixedTypeValue::FloatValue(f) => *f,
+                    _ => 0.0,
+                }
+            }
+        }
+
+        let b2c_result_parameters_output_details = B2CResultParametersOutputDetails {
+            TransactionAmount: transaction_amount,
+            TransactionReceipt: transaction_receipt,
+            B2CRecipientIsRegisteredCustomer: b2c_recipient_is_registered_customer,
+            B2CChargesPaidAccountAvailableFunds: b2c_charges_paid_account_available_funds,
+            ReceiverPartyPublicName: receiver_party_public_name,
+            TransactionCompletedDateTime: transaction_completed_date_time,
+            B2CUtilityAccountAvailableFunds: b2c_utility_account_available_funds,
+            B2CWorkingAccountAvailableFunds: b2c_working_account_available_funds,
+        };
+
+        b2c_result_parameters_output_details
+    }
+
+    pub fn get_c2b_payment_result_parameters_output_details(
+        &self,
+        list_of_items: &Vec<ItemDetails>,
+    ) -> C2BPaymentResultParametersOutputDetails {
+        let mut transaction_amount: f32 = 0.0;
+        let mut transaction_receipt = String::from("");
+        let mut transaction_date = String::from("");
+        let mut phone_number = String::from("");
+
+        for _item in list_of_items.iter() {
+            let _name = &_item.Name;
+            let _value = &_item.Value;
+
+            // Amount
+            if _name
+                .to_string()
+                .to_lowercase()
+                .eq_ignore_ascii_case(&String::from("Amount"))
+            {
+                transaction_amount = match _value {
+                    MixedTypeValue::StringValue(s) => 0.0,
+                    MixedTypeValue::IntegerValue(i) => *i as f32,
+                    MixedTypeValue::FloatValue(f) => *f,
+                    _ => 0.0,
+                }
+            }
+
+            // TransactionReceipt
+            if _name
+                .to_string()
+                .to_lowercase()
+                .eq_ignore_ascii_case(&String::from("MpesaReceiptNumber"))
+            {
+                transaction_receipt = match _value {
+                    MixedTypeValue::StringValue(s) => s.to_string(),
+                    _ => String::from(""),
+                }
+            }
+
+            //transaction_date
+            if _name
+                .to_string()
+                .to_lowercase()
+                .eq_ignore_ascii_case(&String::from("TransactionDate"))
+            {
+                transaction_date = match _value {
+                    MixedTypeValue::FloatValue(f) => f.to_string(),
+                    _ => String::from(""),
+                }
+            }
+
+            // phone_number
+            if _name
+                .to_string()
+                .to_lowercase()
+                .eq_ignore_ascii_case(&String::from("PhoneNumber"))
+            {
+                phone_number = match _value {
+                    MixedTypeValue::FloatValue(f) => f.to_string(),
+                    _ => String::from(""),
+                }
+            }
+        }
+
+        let c2b_payment_result_parameters_output_details =
+            C2BPaymentResultParametersOutputDetails {
+                Amount: transaction_amount,
+                MpesaReceiptNumber: transaction_receipt,
+                TransactionDate: transaction_date,
+                PhoneNumber: phone_number,
+            };
+
+        c2b_payment_result_parameters_output_details
+    }
+
+    pub fn get_business_paybill_result_parameters_output_details(
+        &self,
+        result_parameters: &ResultParameter,
+    ) -> BusinessPayBillResultParametersOutputDetails {
+        let mut debit_account_balance = String::from("");
+        let mut transaction_amount = String::from("");
+        let mut debit_party_affected_account_balance = String::from("");
+        let mut trans_completed_time = String::from("");
+        let mut debit_party_charges = String::from("");
+        let mut receiver_party_public_name = String::from("");
+        let mut _currency = String::from("");
+        let mut initiator_account_current_balance = String::from("");
+        let mut bill_reference_number = String::from("");
+        let mut queue_timeout_url = String::from("");
+
+        for result_parameter in result_parameters.ResultParameter.iter() {
+            let _key = &result_parameter.Key;
+            let _value = &result_parameter.Value;
+
+            // DebitAccountBalance
+            if _key
+                .to_string()
+                .to_lowercase()
+                .eq_ignore_ascii_case(&String::from("DebitAccountBalance"))
+            {
+                debit_account_balance = match _value {
+                    MixedTypeValue::StringValue(s) => s.to_string(),
+                    _ => String::from(""),
+                }
+            }
+
+            // Amount
+            if _key
+                .to_string()
+                .to_lowercase()
+                .eq_ignore_ascii_case(&String::from("Amount"))
+            {
+                transaction_amount = match _value {
+                    MixedTypeValue::StringValue(s) => s.to_string(),
+                    _ => String::from(""),
+                }
+            }
+
+            // DebitPartyAffectedAccountBalance
+            if _key
+                .to_string()
+                .to_lowercase()
+                .eq_ignore_ascii_case(&String::from("DebitPartyAffectedAccountBalance"))
+            {
+                debit_party_affected_account_balance = match _value {
+                    MixedTypeValue::StringValue(s) => s.to_string(),
+                    _ => String::from(""),
+                }
+            }
+
+            // TransCompletedTime
+            if _key
+                .to_string()
+                .to_lowercase()
+                .eq_ignore_ascii_case(&String::from("TransCompletedTime"))
+            {
+                trans_completed_time = match _value {
+                    MixedTypeValue::StringValue(s) => s.to_string(),
+                    _ => String::from(""),
+                }
+            }
+
+            // DebitPartyCharges
+            if _key
+                .to_string()
+                .to_lowercase()
+                .eq_ignore_ascii_case(&String::from("DebitPartyCharges"))
+            {
+                debit_party_charges = match _value {
+                    MixedTypeValue::StringValue(s) => s.to_string(),
+                    _ => String::from(""),
+                }
+            }
+
+            // ReceiverPartyPublicName
+            if _key
+                .to_string()
+                .to_lowercase()
+                .eq_ignore_ascii_case(&String::from("ReceiverPartyPublicName"))
+            {
+                receiver_party_public_name = match _value {
+                    MixedTypeValue::StringValue(s) => s.to_string(),
+                    _ => String::from(""),
+                }
+            }
+
+            // Currency
+            if _key
+                .to_string()
+                .to_lowercase()
+                .eq_ignore_ascii_case(&String::from("Currency"))
+            {
+                _currency = match _value {
+                    MixedTypeValue::StringValue(s) => s.to_string(),
+                    _ => String::from(""),
+                }
+            }
+
+            // InitiatorAccountCurrentBalance
+            if _key
+                .to_string()
+                .to_lowercase()
+                .eq_ignore_ascii_case(&String::from("InitiatorAccountCurrentBalance"))
+            {
+                initiator_account_current_balance = match _value {
+                    MixedTypeValue::StringValue(s) => s.to_string(),
+                    _ => String::from(""),
+                }
+            }
+        }
+
+        let business_paybill_result_parameters_output_details =
+            BusinessPayBillResultParametersOutputDetails {
+                DebitAccountBalance: debit_account_balance,
+                Amount: transaction_amount,
+                DebitPartyAffectedAccountBalance: debit_party_affected_account_balance,
+                TransCompletedTime: trans_completed_time,
+                DebitPartyCharges: debit_party_charges,
+                ReceiverPartyPublicName: receiver_party_public_name,
+                Currency: _currency,
+                InitiatorAccountCurrentBalance: initiator_account_current_balance,
+            };
+
+        business_paybill_result_parameters_output_details
+    }
+
+    pub fn get_business_paybill_Reference_item_output_details(
+        &self,
+        reference_data: &BusinessPayBillReferenceItem,
+    ) -> BusinessPayBillReferenceItemOutputDetails {
+        let mut debit_account_balance = String::from("");
+        let mut transaction_amount = String::from("");
+        let mut debit_party_affected_account_balance = String::from("");
+        let mut trans_completed_time = String::from("");
+        let mut debit_party_charges = String::from("");
+        let mut receiver_party_public_name = String::from("");
+        let mut _currency = String::from("");
+        let mut initiator_account_current_balance = String::from("");
+        let mut bill_reference_number = String::from("");
+        let mut queue_timeout_url = String::from("");
+
+        for reference_item in reference_data.ReferenceItem.iter() {
+            let _key = &reference_item.Key;
+            let _value = &reference_item.Value;
+
+            // BillReferenceNumber
+            if _key
+                .to_string()
+                .to_lowercase()
+                .eq_ignore_ascii_case(&String::from("BillReferenceNumber"))
+            {
+                bill_reference_number = match _value {
+                    MixedTypeValue::StringValue(s) => s.to_string(),
+                    _ => String::from(""),
+                }
+            }
+
+            // QueueTimeoutURL
+            if _key
+                .to_string()
+                .to_lowercase()
+                .eq_ignore_ascii_case(&String::from("QueueTimeoutURL"))
+            {
+                queue_timeout_url = match _value {
+                    MixedTypeValue::StringValue(s) => s.to_string(),
+                    _ => String::from(""),
+                }
+            }
+        }
+
+        let business_paybill_result_parameters_output_details =
+            BusinessPayBillReferenceItemOutputDetails {
+                BillReferenceNumber: bill_reference_number,
+                QueueTimeoutURL: queue_timeout_url,
+            };
+
+        business_paybill_result_parameters_output_details
+    }
+
+    pub fn get_business_buy_goods_result_parameters_output_details(
+        &self,
+        result_parameters: &ResultParameter,
+    ) -> BusinessBuyGoodsResultParametersOutputDetails {
+        let mut debit_account_balance = String::from("");
+        let mut transaction_amount = String::from("");
+        let mut debit_party_affected_account_balance = String::from("");
+        let mut trans_completed_time = String::from("");
+        let mut debit_party_charges = String::from("");
+        let mut receiver_party_public_name = String::from("");
+        let mut _currency = String::from("");
+        let mut initiator_account_current_balance = String::from("");
+        let mut bill_reference_number = String::from("");
+        let mut queue_timeout_url = String::from("");
+
+        for result_parameter in result_parameters.ResultParameter.iter() {
+            let _key = &result_parameter.Key;
+            let _value = &result_parameter.Value;
+
+            // DebitAccountBalance
+            if _key
+                .to_string()
+                .to_lowercase()
+                .eq_ignore_ascii_case(&String::from("DebitAccountBalance"))
+            {
+                debit_account_balance = match _value {
+                    MixedTypeValue::StringValue(s) => s.to_string(),
+                    _ => String::from(""),
+                }
+            }
+
+            // Amount
+            if _key
+                .to_string()
+                .to_lowercase()
+                .eq_ignore_ascii_case(&String::from("Amount"))
+            {
+                transaction_amount = match _value {
+                    MixedTypeValue::StringValue(s) => s.to_string(),
+                    _ => String::from(""),
+                }
+            }
+
+            // DebitPartyAffectedAccountBalance
+            if _key
+                .to_string()
+                .to_lowercase()
+                .eq_ignore_ascii_case(&String::from("DebitPartyAffectedAccountBalance"))
+            {
+                debit_party_affected_account_balance = match _value {
+                    MixedTypeValue::StringValue(s) => s.to_string(),
+                    _ => String::from(""),
+                }
+            }
+
+            // TransCompletedTime
+            if _key
+                .to_string()
+                .to_lowercase()
+                .eq_ignore_ascii_case(&String::from("TransCompletedTime"))
+            {
+                trans_completed_time = match _value {
+                    MixedTypeValue::StringValue(s) => s.to_string(),
+                    _ => String::from(""),
+                }
+            }
+
+            // DebitPartyCharges
+            if _key
+                .to_string()
+                .to_lowercase()
+                .eq_ignore_ascii_case(&String::from("DebitPartyCharges"))
+            {
+                debit_party_charges = match _value {
+                    MixedTypeValue::StringValue(s) => s.to_string(),
+                    _ => String::from(""),
+                }
+            }
+
+            // ReceiverPartyPublicName
+            if _key
+                .to_string()
+                .to_lowercase()
+                .eq_ignore_ascii_case(&String::from("ReceiverPartyPublicName"))
+            {
+                receiver_party_public_name = match _value {
+                    MixedTypeValue::StringValue(s) => s.to_string(),
+                    _ => String::from(""),
+                }
+            }
+
+            // Currency
+            if _key
+                .to_string()
+                .to_lowercase()
+                .eq_ignore_ascii_case(&String::from("Currency"))
+            {
+                _currency = match _value {
+                    MixedTypeValue::StringValue(s) => s.to_string(),
+                    _ => String::from(""),
+                }
+            }
+
+            // InitiatorAccountCurrentBalance
+            if _key
+                .to_string()
+                .to_lowercase()
+                .eq_ignore_ascii_case(&String::from("InitiatorAccountCurrentBalance"))
+            {
+                initiator_account_current_balance = match _value {
+                    MixedTypeValue::StringValue(s) => s.to_string(),
+                    _ => String::from(""),
+                }
+            }
+        }
+
+        let business_buy_goods_result_parameters_output_details =
+            BusinessBuyGoodsResultParametersOutputDetails {
+                DebitAccountBalance: debit_account_balance,
+                Amount: transaction_amount,
+                DebitPartyAffectedAccountBalance: debit_party_affected_account_balance,
+                TransCompletedTime: trans_completed_time,
+                DebitPartyCharges: debit_party_charges,
+                ReceiverPartyPublicName: receiver_party_public_name,
+                Currency: _currency,
+                InitiatorAccountCurrentBalance: initiator_account_current_balance,
+            };
+
+        business_buy_goods_result_parameters_output_details
+    }
+
+    pub fn get_business_buy_goods_reference_item_output_details(
+        &self,
+        reference_data: &BusinessBuyGoodsReferenceItem,
+    ) -> BusinessBuyGoodsReferenceItemOutputDetails {
+        let mut debit_account_balance = String::from("");
+        let mut transaction_amount = String::from("");
+        let mut debit_party_affected_account_balance = String::from("");
+        let mut trans_completed_time = String::from("");
+        let mut debit_party_charges = String::from("");
+        let mut receiver_party_public_name = String::from("");
+        let mut _currency = String::from("");
+        let mut initiator_account_current_balance = String::from("");
+        let mut bill_reference_number = String::from("");
+        let mut queue_timeout_url = String::from("");
+
+        for reference_item in reference_data.ReferenceItem.iter() {
+            let _key = &reference_item.Key;
+            let _value = &reference_item.Value;
+
+            // BillReferenceNumber
+            if _key
+                .to_string()
+                .to_lowercase()
+                .eq_ignore_ascii_case(&String::from("BillReferenceNumber"))
+            {
+                bill_reference_number = match _value {
+                    MixedTypeValue::StringValue(s) => s.to_string(),
+                    _ => String::from(""),
+                }
+            }
+
+            // QueueTimeoutURL
+            if _key
+                .to_string()
+                .to_lowercase()
+                .eq_ignore_ascii_case(&String::from("QueueTimeoutURL"))
+            {
+                queue_timeout_url = match _value {
+                    MixedTypeValue::StringValue(s) => s.to_string(),
+                    _ => String::from(""),
+                }
+            }
+        }
+
+        let business_paybill_result_parameters_output_details =
+            BusinessBuyGoodsReferenceItemOutputDetails {
+                BillReferenceNumber: bill_reference_number,
+                QueueTimeoutURL: queue_timeout_url,
+            };
+
+        business_paybill_result_parameters_output_details
+    }
+
+    /*
+    fn build_business_to_customer_response_data(
+        &self,
+        originator_conversation_id: Option<String>,
+        conversation_id: Option<String>,
+        response_code: Option<String>,
+        response_description: Option<String>,
+    ) -> BusinessToCustomerResponseData {
+        BusinessToCustomerResponseData {
+            OriginatorConversationID: originator_conversation_id,
+            ConversationID: conversation_id,
+            ResponseCode: response_code,
+            ResponseDescription: response_description,
+        }
+    }
+
+    fn build_business_to_customer_error_response_data(
+        &self,
+        request_id: Option<String>,
+        error_code: Option<String>,
+        error_message: Option<String>,
+    ) -> BusinessToCustomerErrorResponseData {
+        BusinessToCustomerErrorResponseData {
+            requestId: request_id,
+            errorCode: error_code,
+            errorMessage: error_message,
+        }
+    }
+    */
+
     pub async fn get_auth_token(&self) -> String {
         let api_key = self.get_api_key();
         //println!("api_key: {:?}", &api_key);
@@ -120,16 +735,12 @@ impl MpesaGateway {
     pub async fn get_register_url(
         &self,
         register_url_details: RegisterUrlInputDetails,
-    ) -> RegisterUrlResponseData {
+    ) -> std::result::Result<RegisterUrlResponseData, reqwest::Error> {
         let _output = self.get_auth_token();
         let access_token: String = _output.await;
         let api_url = &self.register_url;
         //println!("access_token: {:?}", &access_token);
-        let register_url_response_data = RegisterUrlResponseData {
-            OriginatorCoversationID: None,
-            ConversationID: None,
-            ResponseDescription: None,
-        };
+        let register_url_response_data = build_register_url_response_data(None, None, None);
 
         if access_token.is_empty()
             || api_url.is_empty()
@@ -144,11 +755,13 @@ impl MpesaGateway {
             };
             return b;
             */
-            return register_url_response_data;
+            return Ok(register_url_response_data);
         }
 
         let _result = register_url(register_url_details, access_token, api_url.to_string()).await;
 
+        _result
+        /*
         let register_url_response_data: RegisterUrlResponseData = match _result {
             Ok(a) => a,
             Err(e) => {
@@ -166,6 +779,7 @@ impl MpesaGateway {
         };
 
         register_url_response_data
+        */
     }
 
     pub async fn get_b2c(
@@ -182,7 +796,7 @@ impl MpesaGateway {
         let access_token: String = _output.await;
         let api_url = &self.b2c_payment_request_url;
         //println!("access_token: {:?}", &access_token);
-
+        /*
         let business_to_customer_response_data = BusinessToCustomerResponseData {
             OriginatorConversationID: None,
             ConversationID: None,
@@ -195,6 +809,12 @@ impl MpesaGateway {
             errorCode: None,
             errorMessage: None,
         };
+        */
+        let business_to_customer_response_data =
+            build_business_to_customer_response_data(None, None, None, None);
+
+        let business_to_customer_error_response_data =
+            build_business_to_customer_error_response_data(None, None, None);
 
         let my_output = (
             business_to_customer_response_data,
@@ -276,19 +896,11 @@ impl MpesaGateway {
         let access_token: String = _output.await;
         let api_url = &self.stk_push_url;
         //println!("access_token: {:?}", &access_token);
-        let customer_to_business_response_data = CustomerToBusinessPaymentResponseData {
-            MerchantRequestID: None,
-            CheckoutRequestID: None,
-            ResponseCode: None,
-            ResponseDescription: None,
-            CustomerMessage: None,
-        };
+        let customer_to_business_response_data =
+            build_customer_to_business_payment_response_data(None, None, None, None, None);
 
-        let customer_to_business_error_response_data = CustomerToBusinessPaymentErrorResponseData {
-            requestId: None,
-            errorCode: None,
-            errorMessage: None,
-        };
+        let customer_to_business_error_response_data =
+            build_customer_to_business_payment_error_response_data(None, None, None);
 
         let my_output = (
             customer_to_business_response_data,
@@ -374,18 +986,11 @@ impl MpesaGateway {
         let api_url = &self.b2b_payment_request_url;
         //println!("access_token: {:?}", &access_token);
 
-        let business_paybill_response_data = BusinessPayBillResponseData {
-            OriginatorConversationID: None,
-            ConversationID: None,
-            ResponseCode: None,
-            ResponseDescription: None,
-        };
+        let business_paybill_response_data =
+            build_business_paybill_response_data(None, None, None, None);
 
-        let business_paybill_error_response_data = BusinessPayBillErrorResponseData {
-            requestId: None,
-            errorCode: None,
-            errorMessage: None,
-        };
+        let business_paybill_error_response_data =
+            build_business_paybill_error_response_data(None, None, None);
 
         let my_output = (
             business_paybill_response_data,
@@ -459,18 +1064,11 @@ impl MpesaGateway {
         let access_token: String = _output.await;
         let api_url = &self.b2b_payment_request_url;
         //println!("access_token: {:?}", &access_token);
-        let business_buy_goods_response_data = BusinessBuyGoodsResponseData {
-            OriginatorConversationID: None,
-            ConversationID: None,
-            ResponseCode: None,
-            ResponseDescription: None,
-        };
+        let business_buy_goods_response_data =
+            build_business_buy_goods_response_data(None, None, None, None);
 
-        let business_buy_goods_error_response_data = BusinessBuyGoodsErrorResponseData {
-            requestId: None,
-            errorCode: None,
-            errorMessage: None,
-        };
+        let business_buy_goods_error_response_data =
+            build_business_buy_goods_error_response_data(None, None, None);
 
         let my_output = (
             business_buy_goods_response_data,
@@ -532,6 +1130,144 @@ impl MpesaGateway {
     }
 }
 
+fn build_business_to_customer_response_data(
+    originator_conversation_id: Option<String>,
+    conversation_id: Option<String>,
+    response_code: Option<String>,
+    response_description: Option<String>,
+) -> BusinessToCustomerResponseData {
+    BusinessToCustomerResponseData {
+        OriginatorConversationID: originator_conversation_id,
+        ConversationID: conversation_id,
+        ResponseCode: response_code,
+        ResponseDescription: response_description,
+    }
+}
+
+fn build_business_to_customer_error_response_data(
+    request_id: Option<String>,
+    error_code: Option<String>,
+    error_message: Option<String>,
+) -> BusinessToCustomerErrorResponseData {
+    BusinessToCustomerErrorResponseData {
+        requestId: request_id,
+        errorCode: error_code,
+        errorMessage: error_message,
+    }
+}
+
+fn build_customer_to_business_payment_response_data(
+    merchant_request_id: Option<String>,
+    checkout_request_id: Option<String>,
+    response_code: Option<String>,
+    response_description: Option<String>,
+    customer_message: Option<String>,
+) -> CustomerToBusinessPaymentResponseData {
+    CustomerToBusinessPaymentResponseData {
+        MerchantRequestID: merchant_request_id,
+        CheckoutRequestID: checkout_request_id,
+        ResponseCode: response_code,
+        ResponseDescription: response_description,
+        CustomerMessage: customer_message,
+    }
+}
+
+fn build_customer_to_business_payment_error_response_data(
+    request_id: Option<String>,
+    error_code: Option<String>,
+    error_message: Option<String>,
+) -> CustomerToBusinessPaymentErrorResponseData {
+    CustomerToBusinessPaymentErrorResponseData {
+        requestId: request_id,
+        errorCode: error_code,
+        errorMessage: error_message,
+    }
+}
+
+fn build_business_paybill_response_data(
+    originator_conversation_id: Option<String>,
+    conversation_id: Option<String>,
+    response_code: Option<String>,
+    response_description: Option<String>,
+) -> BusinessPayBillResponseData {
+    BusinessPayBillResponseData {
+        OriginatorConversationID: originator_conversation_id,
+        ConversationID: conversation_id,
+        ResponseCode: response_code,
+        ResponseDescription: response_description,
+    }
+}
+
+fn build_business_paybill_error_response_data(
+    request_id: Option<String>,
+    error_code: Option<String>,
+    error_message: Option<String>,
+) -> BusinessPayBillErrorResponseData {
+    BusinessPayBillErrorResponseData {
+        requestId: request_id,
+        errorCode: error_code,
+        errorMessage: error_message,
+    }
+}
+
+fn build_business_buy_goods_response_data(
+    originator_conversation_id: Option<String>,
+    conversation_id: Option<String>,
+    response_code: Option<String>,
+    response_description: Option<String>,
+) -> BusinessBuyGoodsResponseData {
+    BusinessBuyGoodsResponseData {
+        OriginatorConversationID: originator_conversation_id,
+        ConversationID: conversation_id,
+        ResponseCode: response_code,
+        ResponseDescription: response_description,
+    }
+}
+
+fn build_business_buy_goods_error_response_data(
+    request_id: Option<String>,
+    error_code: Option<String>,
+    error_message: Option<String>,
+) -> BusinessBuyGoodsErrorResponseData {
+    BusinessBuyGoodsErrorResponseData {
+        requestId: request_id,
+        errorCode: error_code,
+        errorMessage: error_message,
+    }
+}
+
+fn build_register_url_response_data(
+    originator_conversation_id: Option<String>,
+    conversation_id: Option<String>,
+    response_description: Option<String>,
+) -> RegisterUrlResponseData {
+    RegisterUrlResponseData {
+        OriginatorCoversationID: originator_conversation_id,
+        ConversationID: conversation_id,
+        ResponseDescription: response_description,
+    }
+}
+
+fn build_headers_generate_auth_token(api_key: String) -> HeaderMap {
+    let mut headers = HeaderMap::new();
+
+    headers.insert(CONTENT_TYPE, "text/plain".parse().unwrap());
+    headers.insert(ACCEPT, "application/json".parse().unwrap());
+    headers.insert("Authorization", api_key.parse().unwrap());
+
+    headers
+}
+
+fn build_headers(access_token: String) -> HeaderMap {
+    let mut headers = HeaderMap::new();
+
+    headers.insert(CONTENT_TYPE, "application/json".parse().unwrap());
+    headers.insert(ACCEPT, "application/json".parse().unwrap());
+    headers.insert("Authorization", access_token.parse().unwrap());
+
+    headers
+}
+
 async fn generate_auth_token(
     api_key: String,
     api_url: String,
@@ -543,9 +1279,12 @@ async fn generate_auth_token(
     let date_to_mpesa = Local::now().format("%Y-%m-%d %H:%M:%S%.3f").to_string();
     let res = client
         .get(api_url)
+        /*
         .header(CONTENT_TYPE, "text/plain")
         .header(ACCEPT, "application/json")
         .header("Authorization", api_key)
+        */
+        .headers(build_headers_generate_auth_token(api_key))
         .send()
         //.await?; //The "?" after the await returns errors immediately and hence will not be captured on match clause below
         .await;
@@ -606,22 +1345,23 @@ pub async fn register_url(
         ConfirmationURL: confirmation_url,
         ValidationURL: validation_url,
     };
+
     let client = reqwest::Client::new();
-    let mut register_url_response_data = RegisterUrlResponseData {
-        OriginatorCoversationID: None,
-        ConversationID: None,
-        ResponseDescription: None,
-    };
+
+    let register_url_response_data = build_register_url_response_data(None, None, None);
     //println!("register_url_data: {:?}", &register_url_data);
     //println!("access_token: {:?}", &access_token);
     // "%Y-%m-%d %H:%M:%S" i.e "yyyy-MM-dd HH:mm:ss"
     // "%Y-%m-%d %H:%M:%S%.3f" i.e "yyyy-MM-dd HH:mm:ss.SSS"
-    let date_to_mpesa = Local::now().format("%Y-%m-%d %H:%M:%S%.3f").to_string();
+    //let date_to_mpesa = Local::now().format("%Y-%m-%d %H:%M:%S%.3f").to_string();
     let res = client
         .post(api_url)
+        /*
         .header(CONTENT_TYPE, "application/json")
         .header(ACCEPT, "application/json")
         .header("Authorization", access_token)
+        */
+        .headers(build_headers(access_token))
         .json(&register_url_data)
         .send()
         //.await?; //The "?" after the await returns errors immediately and hence will not be captured on match clause below
@@ -630,11 +1370,17 @@ pub async fn register_url(
     match res {
         Err(e) => {
             println!("server not responding");
+            return Err(e);
         }
         Ok(response) => {
             match response.status() {
                 StatusCode::OK => {
-                    let date_from_mpesa = Local::now().format("%Y-%m-%d %H:%M:%S%.3f").to_string();
+                    let register_url_response_data =
+                        response.json::<RegisterUrlResponseData>().await?;
+
+                    return Ok(register_url_response_data);
+                    //let date_from_mpesa = Local::now().format("%Y-%m-%d %H:%M:%S%.3f").to_string();
+                    /*
                     let k = String::from(""); //Default value.
 
                     let my_output = response.json::<RegisterUrlResponseData>().await?;
@@ -649,6 +1395,7 @@ pub async fn register_url(
                     register_url_response_data.ConversationID = Some(conversation_id.to_string());
                     register_url_response_data.ResponseDescription =
                         Some(response_description.to_string());
+                    */
                     /*
                     create_mpesa_register_url(
                         &data,
@@ -663,7 +1410,24 @@ pub async fn register_url(
                     );
                     */
                 }
-                s => println!("Received response status: {:?}", s),
+                s => {
+                    println!("Received response status: {:?}", s);
+                    let _x = Local::now().format("%Y%m%d%H%M%S%3f").to_string();
+                    let _y = Local::now().format("%Y%m%d%H%M%S%3f").to_string();
+                    let status_code: String = response.status().to_string();
+
+                    let originator_conversation_id: Option<String> = Some(_x);
+                    let conversation_id: Option<String> = Some(_y);
+                    let response_description: Option<String> = Some(status_code);
+
+                    let register_url_response_data = build_register_url_response_data(
+                        originator_conversation_id,
+                        conversation_id,
+                        response_description,
+                    );
+
+                    return Ok(register_url_response_data);
+                }
             }
         }
     };
@@ -706,18 +1470,11 @@ pub async fn business_to_customer(
         Occassion: _occassion,
     };
 
-    let business_to_customer_response_data = BusinessToCustomerResponseData {
-        OriginatorConversationID: None,
-        ConversationID: None,
-        ResponseCode: None,
-        ResponseDescription: None,
-    };
+    let business_to_customer_response_data =
+        build_business_to_customer_response_data(None, None, None, None);
 
-    let business_to_customer_error_response_data = BusinessToCustomerErrorResponseData {
-        requestId: None,
-        errorCode: None,
-        errorMessage: None,
-    };
+    let business_to_customer_error_response_data =
+        build_business_to_customer_error_response_data(None, None, None);
 
     /*
     println!("access_token: {:?}", &access_token);
@@ -732,9 +1489,12 @@ pub async fn business_to_customer(
     //let date_to_mpesa = Local::now().format("%Y-%m-%d %H:%M:%S%.3f").to_string();
     let res = client
         .post(api_url)
+        /*
         .header(CONTENT_TYPE, "application/json")
         .header(ACCEPT, "application/json")
         .header("Authorization", access_token)
+        */
+        .headers(build_headers(access_token))
         .json(&business_to_customer_data)
         .send()
         //.await?; //The "?" after the await returns errors immediately and hence will not be captured on match clause below
@@ -923,19 +1683,11 @@ pub async fn customer_to_business_payment(
         TransactionDesc: transaction_desc,
     };
 
-    let customer_to_business_response_data = CustomerToBusinessPaymentResponseData {
-        MerchantRequestID: None,
-        CheckoutRequestID: None,
-        ResponseCode: None,
-        ResponseDescription: None,
-        CustomerMessage: None,
-    };
+    let customer_to_business_response_data =
+        build_customer_to_business_payment_response_data(None, None, None, None, None);
 
-    let customer_to_business_error_response_data = CustomerToBusinessPaymentErrorResponseData {
-        requestId: None,
-        errorCode: None,
-        errorMessage: None,
-    };
+    let customer_to_business_error_response_data =
+        build_customer_to_business_payment_error_response_data(None, None, None);
 
     /*
     println!("access_token: {:?}", &access_token);
@@ -951,9 +1703,12 @@ pub async fn customer_to_business_payment(
     //let date_to_mpesa = Local::now().format("%Y-%m-%d %H:%M:%S%.3f").to_string();
     let res = client
         .post(api_url)
+        /*
         .header(CONTENT_TYPE, "application/json")
         .header(ACCEPT, "application/json")
         .header("Authorization", access_token)
+        */
+        .headers(build_headers(access_token))
         .json(&customer_to_business_data)
         .send()
         //.await?; //The "?" after the await returns errors immediately and hence will not be captured on match clause below
@@ -1146,18 +1901,11 @@ pub async fn business_paybill(
         ResultURL: result_url,
     };
 
-    let business_paybill_response_data = BusinessPayBillResponseData {
-        OriginatorConversationID: None,
-        ConversationID: None,
-        ResponseCode: None,
-        ResponseDescription: None,
-    };
+    let business_paybill_response_data =
+        build_business_paybill_response_data(None, None, None, None);
 
-    let business_paybill_error_response_data = BusinessPayBillErrorResponseData {
-        requestId: None,
-        errorCode: None,
-        errorMessage: None,
-    };
+    let business_paybill_error_response_data =
+        build_business_paybill_error_response_data(None, None, None);
 
     /*
     println!("access_token: {:?}", &access_token);
@@ -1173,9 +1921,12 @@ pub async fn business_paybill(
     //let date_to_mpesa = Local::now().format("%Y-%m-%d %H:%M:%S%.3f").to_string();
     let res = client
         .post(api_url)
+        /*
         .header(CONTENT_TYPE, "application/json")
         .header(ACCEPT, "application/json")
         .header("Authorization", access_token)
+        */
+        .headers(build_headers(access_token))
         .json(&business_paybill_data)
         .send()
         //.await?; //The "?" after the await returns errors immediately and hence will not be captured on match clause below
@@ -1356,18 +2107,11 @@ async fn business_buy_goods(
         ResultURL: result_url,
     };
 
-    let business_buy_goods_response_data = BusinessBuyGoodsResponseData {
-        OriginatorConversationID: None,
-        ConversationID: None,
-        ResponseCode: None,
-        ResponseDescription: None,
-    };
+    let business_buy_goods_response_data =
+        build_business_buy_goods_response_data(None, None, None, None);
 
-    let business_buy_goods_error_response_data = BusinessBuyGoodsErrorResponseData {
-        requestId: None,
-        errorCode: None,
-        errorMessage: None,
-    };
+    let business_buy_goods_error_response_data =
+        build_business_buy_goods_error_response_data(None, None, None);
 
     /*
     println!("access_token: {:?}", &access_token);
@@ -1383,9 +2127,12 @@ async fn business_buy_goods(
     //let date_to_mpesa = Local::now().format("%Y-%m-%d %H:%M:%S%.3f").to_string();
     let res = client
         .post(api_url)
+        /*
         .header(CONTENT_TYPE, "application/json")
         .header(ACCEPT, "application/json")
         .header("Authorization", access_token)
+        */
+        .headers(build_headers(access_token))
         .json(&business_buy_goods_data)
         .send()
         //.await?; //The "?" after the await returns errors immediately and hence will not be captured on match clause below
