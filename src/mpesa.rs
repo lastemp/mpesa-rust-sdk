@@ -13,18 +13,20 @@ use serde::{Deserialize, Serialize};
 
 use crate::models::{
     AuthTokenResponseData, B2CResultParametersOutputDetails, BusinessBuyGoodsData,
-    BusinessBuyGoodsErrorResponseData, BusinessBuyGoodsInputDetails, BusinessBuyGoodsReferenceItem,
+    BusinessBuyGoodsErrorResponseData, BusinessBuyGoodsFailedResultParameter,
+    BusinessBuyGoodsInputDetails, BusinessBuyGoodsReferenceItem,
     BusinessBuyGoodsReferenceItemOutputDetails, BusinessBuyGoodsResponseData,
-    BusinessBuyGoodsResultParametersOutputDetails, BusinessPayBillData,
-    BusinessPayBillErrorResponseData, BusinessPayBillInputDetails, BusinessPayBillReferenceItem,
+    BusinessBuyGoodsResultParametersOutputDetails, BusinessBuyGoodsTimeoutParametersOutputDetails,
+    BusinessPayBillData, BusinessPayBillErrorResponseData, BusinessPayBillFailedResultParameter,
+    BusinessPayBillInputDetails, BusinessPayBillReferenceItem,
     BusinessPayBillReferenceItemOutputDetails, BusinessPayBillResponseData,
-    BusinessPayBillResultParametersOutputDetails, BusinessToCustomerData,
-    BusinessToCustomerErrorResponseData, BusinessToCustomerInputDetails,
+    BusinessPayBillResultParametersOutputDetails, BusinessPayBillTimeoutParametersOutputDetails,
+    BusinessToCustomerData, BusinessToCustomerErrorResponseData, BusinessToCustomerInputDetails,
     BusinessToCustomerResponseData, C2BPaymentResultParametersOutputDetails,
     CustomerToBusinessPaymentData, CustomerToBusinessPaymentErrorResponseData,
     CustomerToBusinessPaymentInputDetails, CustomerToBusinessPaymentResponseData, ItemDetails,
-    MixedTypeValue, RegisterUrlData, RegisterUrlInputDetails, RegisterUrlResponseData,
-    ResultParameter, ResultParameterDetails,
+    MixedTypeValue, ReferenceItemDetails, RegisterUrlData, RegisterUrlInputDetails,
+    RegisterUrlResponseData, ResultParameter, ResultParameterDetails,
 };
 
 const AUTHORISATION_BEARER: &str = "Bearer";
@@ -34,7 +36,7 @@ pub struct MpesaGateway {
     consumer_key: String,
     consumer_secret: String,
     auth_token_url: String,
-    register_url: String,
+    //register_url: String,
     b2c_payment_request_url: String,
     stk_push_url: String,
     b2b_payment_request_url: String,
@@ -45,19 +47,19 @@ impl MpesaGateway {
         consumer_key: String,
         consumer_secret: String,
         auth_token_url: String,
-        register_url: String,
+        //register_url: String,
         b2c_payment_request_url: String,
         stk_push_url: String,
         b2b_payment_request_url: String,
     ) -> Self {
         Self {
-            consumer_key: consumer_key,
-            consumer_secret: consumer_secret,
-            auth_token_url: auth_token_url,
-            register_url: register_url,
-            b2c_payment_request_url: b2c_payment_request_url,
-            stk_push_url: stk_push_url,
-            b2b_payment_request_url: b2b_payment_request_url,
+            consumer_key,
+            consumer_secret,
+            auth_token_url,
+            //register_url,
+            b2c_payment_request_url,
+            stk_push_url,
+            b2b_payment_request_url,
         }
     }
 
@@ -657,6 +659,100 @@ impl MpesaGateway {
         business_paybill_result_parameters_output_details
     }
 
+    pub fn get_business_paybill_timeout_parameters_output_details(
+        &self,
+        result_parameter: &BusinessPayBillFailedResultParameter,
+        reference_data: &ReferenceItemDetails,
+    ) -> BusinessPayBillTimeoutParametersOutputDetails {
+        let mut bo_completed_time = String::from("");
+        let mut queue_timeout_url = String::from("");
+
+        let result_parameter_key = &result_parameter.ResultParameter.Key;
+        let result_parameter_value = &result_parameter.ResultParameter.Value;
+
+        let reference_data_key = &reference_data.Key;
+        let reference_data_value = &reference_data.Value;
+
+        // BOCompletedTime
+        if result_parameter_key
+            .to_string()
+            .to_lowercase()
+            .eq_ignore_ascii_case(&String::from("BOCompletedTime"))
+        {
+            bo_completed_time = match result_parameter_value {
+                MixedTypeValue::FloatValue(s) => s.to_string(),
+                _ => String::from(""),
+            }
+        }
+
+        // QueueTimeoutURL
+        if reference_data_key
+            .to_string()
+            .to_lowercase()
+            .eq_ignore_ascii_case(&String::from("QueueTimeoutURL"))
+        {
+            queue_timeout_url = match reference_data_value {
+                s => s.to_string(),
+                _ => String::from(""),
+            }
+        }
+
+        let business_paybill_timeout_parameters_output_details =
+            BusinessPayBillTimeoutParametersOutputDetails {
+                BOCompletedTime: bo_completed_time,
+                QueueTimeoutURL: queue_timeout_url,
+            };
+
+        business_paybill_timeout_parameters_output_details
+    }
+
+    pub fn get_business_buy_goods_timeout_parameters_output_details(
+        &self,
+        result_parameter: &BusinessBuyGoodsFailedResultParameter,
+        reference_data: &ReferenceItemDetails,
+    ) -> BusinessBuyGoodsTimeoutParametersOutputDetails {
+        let mut bo_completed_time = String::from("");
+        let mut queue_timeout_url = String::from("");
+
+        let result_parameter_key = &result_parameter.ResultParameter.Key;
+        let result_parameter_value = &result_parameter.ResultParameter.Value;
+
+        let reference_data_key = &reference_data.Key;
+        let reference_data_value = &reference_data.Value;
+
+        // BOCompletedTime
+        if result_parameter_key
+            .to_string()
+            .to_lowercase()
+            .eq_ignore_ascii_case(&String::from("BOCompletedTime"))
+        {
+            bo_completed_time = match result_parameter_value {
+                MixedTypeValue::FloatValue(s) => s.to_string(),
+                _ => String::from(""),
+            }
+        }
+
+        // QueueTimeoutURL
+        if reference_data_key
+            .to_string()
+            .to_lowercase()
+            .eq_ignore_ascii_case(&String::from("QueueTimeoutURL"))
+        {
+            queue_timeout_url = match reference_data_value {
+                s => s.to_string(),
+                _ => String::from(""),
+            }
+        }
+
+        let business_buy_goods_timeout_parameters_output_details =
+            BusinessBuyGoodsTimeoutParametersOutputDetails {
+                BOCompletedTime: bo_completed_time,
+                QueueTimeoutURL: queue_timeout_url,
+            };
+
+        business_buy_goods_timeout_parameters_output_details
+    }
+
     /*
     fn build_business_to_customer_response_data(
         &self,
@@ -738,15 +834,13 @@ impl MpesaGateway {
     ) -> std::result::Result<RegisterUrlResponseData, reqwest::Error> {
         let _output = self.get_auth_token();
         let access_token: String = _output.await;
-        let api_url = &self.register_url;
+        //let api_url = &self.register_url;
         //println!("access_token: {:?}", &access_token);
         let register_url_response_data = build_register_url_response_data(None, None, None);
 
-        if access_token.is_empty()
-            || api_url.is_empty()
-            || register_url_details.short_code.is_empty()
-        {
-            println!("access_token or api_url or register_url_details is empty");
+        if access_token.is_empty() || access_token.replace(" ", "").trim().len() == 0 {
+            //println!("access_token or api_url or register_url_details is empty");
+            println!("access_token is empty");
             /*
             let b = RegisterUrlResponseData {
                 OriginatorCoversationID: None,
@@ -758,7 +852,7 @@ impl MpesaGateway {
             return Ok(register_url_response_data);
         }
 
-        let _result = register_url(register_url_details, access_token, api_url.to_string()).await;
+        let _result = register_url(register_url_details, access_token).await;
 
         _result
         /*
@@ -1236,6 +1330,20 @@ fn build_business_buy_goods_error_response_data(
     }
 }
 
+fn build_register_url_data(
+    short_code: String,
+    response_type: String,
+    confirmation_url: String,
+    validation_url: String,
+) -> RegisterUrlData {
+    RegisterUrlData {
+        ShortCode: short_code,
+        ResponseType: response_type,
+        ConfirmationURL: confirmation_url,
+        ValidationURL: validation_url,
+    }
+}
+
 fn build_register_url_response_data(
     originator_conversation_id: Option<String>,
     conversation_id: Option<String>,
@@ -1245,6 +1353,124 @@ fn build_register_url_response_data(
         OriginatorCoversationID: originator_conversation_id,
         ConversationID: conversation_id,
         ResponseDescription: response_description,
+    }
+}
+
+fn build_business_to_customer_data(
+    initiator_name: String,
+    security_credential: String,
+    command_id: String,
+    amount: u32,
+    party_a: u32,
+    party_b: String,
+    _remarks: String,
+    queue_time_out_url: String,
+    result_url: String,
+    _occassion: String,
+) -> BusinessToCustomerData {
+    BusinessToCustomerData {
+        InitiatorName: initiator_name,
+        SecurityCredential: security_credential,
+        CommandID: command_id,
+        Amount: amount,
+        PartyA: party_a,
+        PartyB: party_b,
+        Remarks: _remarks,
+        QueueTimeOutURL: queue_time_out_url,
+        ResultURL: result_url,
+        Occassion: _occassion,
+    }
+}
+
+fn build_customer_to_business_data(
+    business_short_code: String,
+    _password: String,
+    time_stamp: String,
+    transaction_type: String,
+    _amount: u32,
+    party_a: u64,
+    party_b: u32,
+    phone_number: u64,
+    call_back_url: String,
+    account_reference: String,
+    transaction_desc: String,
+) -> CustomerToBusinessPaymentData {
+    CustomerToBusinessPaymentData {
+        BusinessShortCode: business_short_code,
+        Password: _password,
+        Timestamp: time_stamp,
+        TransactionType: transaction_type,
+        Amount: _amount,
+        PartyA: party_a,
+        PartyB: party_b,
+        PhoneNumber: phone_number,
+        CallBackURL: call_back_url,
+        AccountReference: account_reference,
+        TransactionDesc: transaction_desc,
+    }
+}
+
+fn build_business_paybill_data(
+    _initiator: String,
+    security_credential: String,
+    command_id: String,
+    sender_identifier_type: String,
+    reciever_identifier_type: String,
+    _amount: u32,
+    party_a: String,
+    party_b: String,
+    account_reference: String,
+    _requester: String,
+    _remarks: String,
+    queue_time_out_url: String,
+    result_url: String,
+) -> BusinessPayBillData {
+    BusinessPayBillData {
+        Initiator: _initiator,
+        SecurityCredential: security_credential,
+        CommandID: command_id,
+        SenderIdentifierType: sender_identifier_type,
+        RecieverIdentifierType: reciever_identifier_type,
+        Amount: _amount,
+        PartyA: party_a,
+        PartyB: party_b,
+        AccountReference: account_reference,
+        Requester: _requester,
+        Remarks: _remarks,
+        QueueTimeOutURL: queue_time_out_url,
+        ResultURL: result_url,
+    }
+}
+
+fn build_business_buy_goods_data(
+    _initiator: String,
+    security_credential: String,
+    command_id: String,
+    sender_identifier_type: String,
+    reciever_identifier_type: String,
+    _amount: u32,
+    party_a: String,
+    party_b: String,
+    account_reference: String,
+    _requester: String,
+    _remarks: String,
+    queue_time_out_url: String,
+    result_url: String,
+) -> BusinessBuyGoodsData {
+    BusinessBuyGoodsData {
+        Initiator: _initiator,
+        SecurityCredential: security_credential,
+        CommandID: command_id,
+        SenderIdentifierType: sender_identifier_type,
+        RecieverIdentifierType: reciever_identifier_type,
+        Amount: _amount,
+        PartyA: party_a,
+        PartyB: party_b,
+        AccountReference: account_reference,
+        Requester: _requester,
+        Remarks: _remarks,
+        QueueTimeOutURL: queue_time_out_url,
+        ResultURL: result_url,
     }
 }
 
@@ -1332,19 +1558,29 @@ async fn generate_auth_token(
 pub async fn register_url(
     register_url_details: RegisterUrlInputDetails,
     access_token: String,
-    api_url: String,
 ) -> std::result::Result<RegisterUrlResponseData, reqwest::Error> {
+    /*
     let short_code: String = register_url_details.short_code;
     let response_type: String = register_url_details.response_type;
     let confirmation_url: String = register_url_details.confirmation_url;
     let validation_url: String = register_url_details.validation_url;
-
+    */
+    /*
     let register_url_data = RegisterUrlData {
         ShortCode: short_code,
         ResponseType: response_type,
         ConfirmationURL: confirmation_url,
         ValidationURL: validation_url,
     };
+    */
+    let api_url: String = register_url_details.get_api_url();
+    let short_code: String = register_url_details.get_short_code();
+    let response_type: String = register_url_details.get_response_type();
+    let confirmation_url: String = register_url_details.get_confirmation_url();
+    let validation_url: String = register_url_details.get_validation_url();
+
+    let register_url_data =
+        build_register_url_data(short_code, response_type, confirmation_url, validation_url);
 
     let client = reqwest::Client::new();
 
@@ -1456,7 +1692,7 @@ pub async fn business_to_customer(
     let queue_time_out_url: String = business_to_customer_details.queue_time_out_url;
     let result_url: String = business_to_customer_details.result_url;
     let _occassion: String = business_to_customer_details._occassion;
-
+    /*
     let business_to_customer_data = BusinessToCustomerData {
         InitiatorName: initiator_name,
         SecurityCredential: security_credential,
@@ -1469,7 +1705,19 @@ pub async fn business_to_customer(
         ResultURL: result_url,
         Occassion: _occassion,
     };
-
+    */
+    let business_to_customer_data = build_business_to_customer_data(
+        initiator_name,
+        security_credential,
+        command_id,
+        amount,
+        party_a,
+        party_b,
+        _remarks,
+        queue_time_out_url,
+        result_url,
+        _occassion,
+    );
     let business_to_customer_response_data =
         build_business_to_customer_response_data(None, None, None, None);
 
@@ -1668,7 +1916,7 @@ pub async fn customer_to_business_payment(
     let call_back_url: String = customer_to_business_payment_details.call_back_url;
     let account_reference: String = customer_to_business_payment_details.account_reference;
     let transaction_desc: String = customer_to_business_payment_details.transaction_desc;
-
+    /*
     let customer_to_business_data = CustomerToBusinessPaymentData {
         BusinessShortCode: business_short_code,
         Password: _password,
@@ -1682,7 +1930,20 @@ pub async fn customer_to_business_payment(
         AccountReference: account_reference,
         TransactionDesc: transaction_desc,
     };
-
+    */
+    let customer_to_business_data = build_customer_to_business_data(
+        business_short_code,
+        _password,
+        time_stamp,
+        transaction_type,
+        _amount,
+        party_a,
+        party_b,
+        phone_number,
+        call_back_url,
+        account_reference,
+        transaction_desc,
+    );
     let customer_to_business_response_data =
         build_customer_to_business_payment_response_data(None, None, None, None, None);
 
@@ -1884,7 +2145,7 @@ pub async fn business_paybill(
     let _remarks: String = business_paybill_details._remarks;
     let queue_time_out_url: String = business_paybill_details.queue_time_out_url;
     let result_url: String = business_paybill_details.result_url;
-
+    /*
     let business_paybill_data = BusinessPayBillData {
         Initiator: _initiator,
         SecurityCredential: security_credential,
@@ -1900,7 +2161,22 @@ pub async fn business_paybill(
         QueueTimeOutURL: queue_time_out_url,
         ResultURL: result_url,
     };
-
+    */
+    let business_paybill_data = build_business_paybill_data(
+        _initiator,
+        security_credential,
+        command_id,
+        sender_identifier_type,
+        reciever_identifier_type,
+        _amount,
+        party_a,
+        party_b,
+        account_reference,
+        _requester,
+        _remarks,
+        queue_time_out_url,
+        result_url,
+    );
     let business_paybill_response_data =
         build_business_paybill_response_data(None, None, None, None);
 
@@ -2090,7 +2366,7 @@ async fn business_buy_goods(
     let _remarks: String = business_buy_goods_details._remarks;
     let queue_time_out_url: String = business_buy_goods_details.queue_time_out_url;
     let result_url: String = business_buy_goods_details.result_url;
-
+    /*
     let business_buy_goods_data = BusinessBuyGoodsData {
         Initiator: _initiator,
         SecurityCredential: security_credential,
@@ -2106,7 +2382,22 @@ async fn business_buy_goods(
         QueueTimeOutURL: queue_time_out_url,
         ResultURL: result_url,
     };
-
+    */
+    let business_buy_goods_data = build_business_buy_goods_data(
+        _initiator,
+        security_credential,
+        command_id,
+        sender_identifier_type,
+        reciever_identifier_type,
+        _amount,
+        party_a,
+        party_b,
+        account_reference,
+        _requester,
+        _remarks,
+        queue_time_out_url,
+        result_url,
+    );
     let business_buy_goods_response_data =
         build_business_buy_goods_response_data(None, None, None, None);
 

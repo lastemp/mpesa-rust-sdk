@@ -61,7 +61,6 @@ async fn main() {
         App::new()
             .app_data(shared_data.clone())
             .service(routes::index)
-            //.service(routes::generate_auth)
             .service(routes::register_client_urls)
             .service(routes::validation_c2b)
             .service(routes::confirmation_c2b)

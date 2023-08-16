@@ -373,6 +373,7 @@ pub struct BusinessBuyGoodsFailedData {
 }
 
 // This struct holds  Register Url processing data
+/*
 pub struct RegisterUrlInputDetails {
     //pub access_token: String,
     //pub api_url: String,
@@ -381,7 +382,85 @@ pub struct RegisterUrlInputDetails {
     pub confirmation_url: String,
     pub validation_url: String,
 }
+*/
+pub struct RegisterUrlInputDetails {
+    api_url: String,
+    short_code: String,
+    response_type: String,
+    confirmation_url: String,
+    validation_url: String,
+}
 
+impl RegisterUrlInputDetails {
+    pub fn new(
+        api_url: String,
+        short_code: String,
+        response_type: String,
+        confirmation_url: String,
+        validation_url: String,
+    ) -> Result<Self, String> {
+        /*
+        Self {
+            short_code,
+            response_type,
+            confirmation_url,
+            validation_url,
+        }
+        */
+        if api_url.is_empty() || api_url.replace(" ", "").trim().len() == 0 {
+            return Err(String::from("api url is empty"));
+        }
+
+        if short_code.is_empty() || short_code.replace(" ", "").trim().len() == 0 {
+            return Err(String::from("short code is empty"));
+        }
+
+        if response_type.is_empty() || response_type.replace(" ", "").trim().len() == 0 {
+            return Err(String::from("response type is empty"));
+        }
+
+        if confirmation_url.is_empty() || confirmation_url.replace(" ", "").trim().len() == 0 {
+            return Err(String::from("confirmation url is empty"));
+        }
+
+        if validation_url.is_empty() || validation_url.replace(" ", "").trim().len() == 0 {
+            return Err(String::from("validation url is empty"));
+        }
+
+        Ok(Self {
+            api_url,
+            short_code,
+            response_type,
+            confirmation_url,
+            validation_url,
+        })
+    }
+
+    pub fn get_api_url(&self) -> String {
+        let api_url = &self.api_url;
+        api_url.to_string()
+    }
+
+    pub fn get_short_code(&self) -> String {
+        let short_code = &self.short_code;
+        short_code.to_string()
+    }
+
+    pub fn get_response_type(&self) -> String {
+        let response_type = &self.response_type;
+        response_type.to_string()
+    }
+
+    pub fn get_confirmation_url(&self) -> String {
+        let confirmation_url = &self.confirmation_url;
+        confirmation_url.to_string()
+    }
+
+    pub fn get_validation_url(&self) -> String {
+        let validation_url = &self.validation_url;
+        validation_url.to_string()
+    }
+}
 // This struct holds  Business To Customer processing data
 #[derive(Debug)]
 pub struct BusinessToCustomerInputDetails {
@@ -503,5 +582,17 @@ pub struct BusinessBuyGoodsResultParametersOutputDetails {
 #[derive(Debug)]
 pub struct BusinessBuyGoodsReferenceItemOutputDetails {
     pub BillReferenceNumber: String,
+    pub QueueTimeoutURL: String,
+}
+
+#[derive(Debug)]
+pub struct BusinessPayBillTimeoutParametersOutputDetails {
+    pub BOCompletedTime: String,
+    pub QueueTimeoutURL: String,
+}
+
+#[derive(Debug)]
+pub struct BusinessBuyGoodsTimeoutParametersOutputDetails {
+    pub BOCompletedTime: String,
     pub QueueTimeoutURL: String,
 }
