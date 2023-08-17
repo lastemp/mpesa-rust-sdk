@@ -399,14 +399,6 @@ impl RegisterUrlInputDetails {
         confirmation_url: String,
         validation_url: String,
     ) -> Result<Self, String> {
-        /*
-        Self {
-            short_code,
-            response_type,
-            confirmation_url,
-            validation_url,
-        }
-        */
         if api_url.is_empty() || api_url.replace(" ", "").trim().len() == 0 {
             return Err(String::from("api url is empty"));
         }
@@ -461,72 +453,678 @@ impl RegisterUrlInputDetails {
         validation_url.to_string()
     }
 }
+
 // This struct holds  Business To Customer processing data
 #[derive(Debug)]
 pub struct BusinessToCustomerInputDetails {
-    //pub api_url: String,
-    pub initiator_name: String,
-    pub security_credential: String,
-    pub command_id: String,
-    pub amount: u32,
-    pub party_a: u32,
-    pub party_b: String,
-    pub _remarks: String,
-    pub queue_time_out_url: String,
-    pub result_url: String,
-    pub _occassion: String,
+    api_url: String,
+    initiator_name: String,
+    security_credential: String,
+    command_id: String,
+    amount: u32,
+    party_a: u32,
+    party_b: String,
+    _remarks: String,
+    queue_time_out_url: String,
+    result_url: String,
+    _occassion: String,
+}
+
+impl BusinessToCustomerInputDetails {
+    pub fn new(
+        api_url: String,
+        initiator_name: String,
+        security_credential: String,
+        command_id: String,
+        amount: u32,
+        party_a: u32,
+        party_b: String,
+        _remarks: String,
+        queue_time_out_url: String,
+        result_url: String,
+        _occassion: String,
+    ) -> Result<Self, String> {
+        if api_url.is_empty() || api_url.replace(" ", "").trim().len() == 0 {
+            return Err(String::from("api url is empty"));
+        }
+
+        if initiator_name.is_empty() || initiator_name.replace(" ", "").trim().len() == 0 {
+            return Err(String::from("initiator name is empty"));
+        }
+
+        if security_credential.is_empty() || security_credential.replace(" ", "").trim().len() == 0
+        {
+            return Err(String::from("security credential is empty"));
+        }
+
+        if command_id.is_empty() || command_id.replace(" ", "").trim().len() == 0 {
+            return Err(String::from("command id is empty"));
+        }
+
+        if amount == 0 {
+            return Err(String::from("amount has invalid value"));
+        }
+
+        if party_a == 0 {
+            return Err(String::from("party a has invalid value"));
+        }
+
+        if party_b.is_empty() || party_b.replace(" ", "").trim().len() == 0 {
+            return Err(String::from("party b is empty"));
+        }
+
+        if _remarks.is_empty() || _remarks.replace(" ", "").trim().len() == 0 {
+            return Err(String::from("remarks is empty"));
+        }
+
+        if queue_time_out_url.is_empty() || queue_time_out_url.replace(" ", "").trim().len() == 0 {
+            return Err(String::from("queue_time_out url is empty"));
+        }
+
+        if result_url.is_empty() || result_url.replace(" ", "").trim().len() == 0 {
+            return Err(String::from("result url is empty"));
+        }
+
+        if _occassion.is_empty() || _occassion.replace(" ", "").trim().len() == 0 {
+            return Err(String::from("occassion is empty"));
+        }
+
+        Ok(Self {
+            api_url,
+            initiator_name,
+            security_credential,
+            command_id,
+            amount,
+            party_a,
+            party_b,
+            _remarks,
+            queue_time_out_url,
+            result_url,
+            _occassion,
+        })
+    }
+
+    pub fn get_api_url(&self) -> String {
+        let api_url = &self.api_url;
+        api_url.to_string()
+    }
+
+    pub fn get_initiator_name(&self) -> String {
+        let initiator_name = &self.initiator_name;
+        initiator_name.to_string()
+    }
+
+    pub fn get_security_credential(&self) -> String {
+        let security_credential = &self.security_credential;
+        security_credential.to_string()
+    }
+
+    pub fn get_command_id(&self) -> String {
+        let command_id = &self.command_id;
+        command_id.to_string()
+    }
+
+    pub fn get_amount(&self) -> u32 {
+        let amount = &self.amount;
+        *amount
+    }
+
+    pub fn get_party_a(&self) -> u32 {
+        let party_a = &self.party_a;
+        *party_a
+    }
+
+    pub fn get_party_b(&self) -> String {
+        let party_b = &self.party_b;
+        party_b.to_string()
+    }
+
+    pub fn get_remarks(&self) -> String {
+        let _remarks = &self._remarks;
+        _remarks.to_string()
+    }
+
+    pub fn get_queue_time_out_url(&self) -> String {
+        let queue_time_out_url = &self.queue_time_out_url;
+        queue_time_out_url.to_string()
+    }
+
+    pub fn get_result_url(&self) -> String {
+        let result_url = &self.result_url;
+        result_url.to_string()
+    }
+
+    pub fn get_occassion(&self) -> String {
+        let _occassion = &self._occassion;
+        _occassion.to_string()
+    }
 }
 
 #[derive(Debug)]
 pub struct CustomerToBusinessPaymentInputDetails {
-    //pub api_url: String,
-    pub business_short_code: String,
-    pub _password: String,
-    pub time_stamp: String,
-    pub transaction_type: String,
-    pub _amount: u32,
-    pub party_a: u64,
-    pub party_b: u32,
-    pub phone_number: u64,
-    pub call_back_url: String,
-    pub account_reference: String,
-    pub transaction_desc: String,
+    api_url: String,
+    business_short_code: String,
+    _password: String,
+    time_stamp: String,
+    transaction_type: String,
+    _amount: u32,
+    party_a: u64,
+    party_b: u32,
+    phone_number: u64,
+    call_back_url: String,
+    account_reference: String,
+    transaction_desc: String,
+}
+
+impl CustomerToBusinessPaymentInputDetails {
+    pub fn new(
+        api_url: String,
+        business_short_code: String,
+        _password: String,
+        time_stamp: String,
+        transaction_type: String,
+        _amount: u32,
+        party_a: u64,
+        party_b: u32,
+        phone_number: u64,
+        call_back_url: String,
+        account_reference: String,
+        transaction_desc: String,
+    ) -> Result<Self, String> {
+        if api_url.is_empty() || api_url.replace(" ", "").trim().len() == 0 {
+            return Err(String::from("api url is empty"));
+        }
+
+        if business_short_code.is_empty() || business_short_code.replace(" ", "").trim().len() == 0
+        {
+            return Err(String::from("business short code is empty"));
+        }
+
+        if _password.is_empty() || _password.replace(" ", "").trim().len() == 0 {
+            return Err(String::from("password is empty"));
+        }
+
+        if time_stamp.is_empty() || time_stamp.replace(" ", "").trim().len() == 0 {
+            return Err(String::from("time stamp is empty"));
+        }
+
+        if transaction_type.is_empty() || transaction_type.replace(" ", "").trim().len() == 0 {
+            return Err(String::from("transaction type is empty"));
+        }
+
+        if _amount == 0 {
+            return Err(String::from("amount has invalid value"));
+        }
+
+        if party_a == 0 {
+            return Err(String::from("party a has invalid value"));
+        }
+
+        if party_b == 0 {
+            return Err(String::from("party b has invalid value"));
+        }
+
+        if phone_number == 0 {
+            return Err(String::from("phone number has invalid value"));
+        }
+
+        if call_back_url.is_empty() || call_back_url.replace(" ", "").trim().len() == 0 {
+            return Err(String::from("call_back url is empty"));
+        }
+
+        if account_reference.is_empty() || account_reference.replace(" ", "").trim().len() == 0 {
+            return Err(String::from("account reference is empty"));
+        }
+
+        if transaction_desc.is_empty() || transaction_desc.replace(" ", "").trim().len() == 0 {
+            return Err(String::from("transaction desc is empty"));
+        }
+
+        Ok(Self {
+            api_url,
+            business_short_code,
+            _password,
+            time_stamp,
+            transaction_type,
+            _amount,
+            party_a,
+            party_b,
+            phone_number,
+            call_back_url,
+            account_reference,
+            transaction_desc,
+        })
+    }
+
+    pub fn get_api_url(&self) -> String {
+        let api_url = &self.api_url;
+        api_url.to_string()
+    }
+
+    pub fn get_business_short_code(&self) -> String {
+        let business_short_code = &self.business_short_code;
+        business_short_code.to_string()
+    }
+
+    pub fn get_password(&self) -> String {
+        let _password = &self._password;
+        _password.to_string()
+    }
+
+    pub fn get_time_stamp(&self) -> String {
+        let time_stamp = &self.time_stamp;
+        time_stamp.to_string()
+    }
+
+    pub fn get_transaction_type(&self) -> String {
+        let transaction_type = &self.transaction_type;
+        transaction_type.to_string()
+    }
+
+    pub fn get_amount(&self) -> u32 {
+        let _amount = &self._amount;
+        *_amount
+    }
+
+    pub fn get_party_a(&self) -> u64 {
+        let party_a = &self.party_a;
+        *party_a
+    }
+
+    pub fn get_party_b(&self) -> u32 {
+        let party_b = &self.party_b;
+        *party_b
+    }
+
+    pub fn get_phone_number(&self) -> u64 {
+        let phone_number = &self.phone_number;
+        *phone_number
+    }
+
+    pub fn get_call_back_url(&self) -> String {
+        let call_back_url = &self.call_back_url;
+        call_back_url.to_string()
+    }
+
+    pub fn get_account_reference(&self) -> String {
+        let account_reference = &self.account_reference;
+        account_reference.to_string()
+    }
+
+    pub fn get_transaction_desc(&self) -> String {
+        let transaction_desc = &self.transaction_desc;
+        transaction_desc.to_string()
+    }
 }
 
 #[derive(Debug)]
 pub struct BusinessPayBillInputDetails {
-    //pub api_url: String,
-    pub _initiator: String,
-    pub security_credential: String,
-    pub command_id: String,
-    pub sender_identifier_type: String,
-    pub reciever_identifier_type: String,
-    pub _amount: u32,
-    pub party_a: String,
-    pub party_b: String,
-    pub account_reference: String,
-    pub _requester: String,
-    pub _remarks: String,
-    pub queue_time_out_url: String,
-    pub result_url: String,
+    api_url: String,
+    _initiator: String,
+    security_credential: String,
+    command_id: String,
+    sender_identifier_type: String,
+    reciever_identifier_type: String,
+    _amount: u32,
+    party_a: String,
+    party_b: String,
+    account_reference: String,
+    _requester: String,
+    _remarks: String,
+    queue_time_out_url: String,
+    result_url: String,
+}
+
+impl BusinessPayBillInputDetails {
+    pub fn new(
+        api_url: String,
+        _initiator: String,
+        security_credential: String,
+        command_id: String,
+        sender_identifier_type: String,
+        reciever_identifier_type: String,
+        _amount: u32,
+        party_a: String,
+        party_b: String,
+        account_reference: String,
+        _requester: String,
+        _remarks: String,
+        queue_time_out_url: String,
+        result_url: String,
+    ) -> Result<Self, String> {
+        if api_url.is_empty() || api_url.replace(" ", "").trim().len() == 0 {
+            return Err(String::from("api url is empty"));
+        }
+
+        if _initiator.is_empty() || _initiator.replace(" ", "").trim().len() == 0 {
+            return Err(String::from("initiator is empty"));
+        }
+
+        if security_credential.is_empty() || security_credential.replace(" ", "").trim().len() == 0
+        {
+            return Err(String::from("security credential is empty"));
+        }
+
+        if command_id.is_empty() || command_id.replace(" ", "").trim().len() == 0 {
+            return Err(String::from("command id is empty"));
+        }
+
+        if sender_identifier_type.is_empty()
+            || sender_identifier_type.replace(" ", "").trim().len() == 0
+        {
+            return Err(String::from("sender identifier type is empty"));
+        }
+
+        if reciever_identifier_type.is_empty()
+            || reciever_identifier_type.replace(" ", "").trim().len() == 0
+        {
+            return Err(String::from("reciever identifier type is empty"));
+        }
+
+        if _amount == 0 {
+            return Err(String::from("amount has invalid value"));
+        }
+
+        if party_a.is_empty() || party_a.replace(" ", "").trim().len() == 0 {
+            return Err(String::from("party a is empty"));
+        }
+
+        if party_b.is_empty() || party_b.replace(" ", "").trim().len() == 0 {
+            return Err(String::from("party b is empty"));
+        }
+
+        if account_reference.is_empty() || account_reference.replace(" ", "").trim().len() == 0 {
+            return Err(String::from("account reference is empty"));
+        }
+
+        if _requester.is_empty() || _requester.replace(" ", "").trim().len() == 0 {
+            return Err(String::from("_requester is empty"));
+        }
+
+        if _remarks.is_empty() || _remarks.replace(" ", "").trim().len() == 0 {
+            return Err(String::from("remarks is empty"));
+        }
+
+        if queue_time_out_url.is_empty() || queue_time_out_url.replace(" ", "").trim().len() == 0 {
+            return Err(String::from("queue_time_out url is empty"));
+        }
+
+        if result_url.is_empty() || result_url.replace(" ", "").trim().len() == 0 {
+            return Err(String::from("result url is empty"));
+        }
+
+        Ok(Self {
+            api_url,
+            _initiator,
+            security_credential,
+            command_id,
+            sender_identifier_type,
+            reciever_identifier_type,
+            _amount,
+            party_a,
+            party_b,
+            account_reference,
+            _requester,
+            _remarks,
+            queue_time_out_url,
+            result_url,
+        })
+    }
+
+    pub fn get_api_url(&self) -> String {
+        let api_url = &self.api_url;
+        api_url.to_string()
+    }
+
+    pub fn get_initiator(&self) -> String {
+        let _initiator = &self._initiator;
+        _initiator.to_string()
+    }
+
+    pub fn get_security_credential(&self) -> String {
+        let security_credential = &self.security_credential;
+        security_credential.to_string()
+    }
+
+    pub fn get_command_id(&self) -> String {
+        let command_id = &self.command_id;
+        command_id.to_string()
+    }
+
+    pub fn get_sender_identifier_type(&self) -> String {
+        let sender_identifier_type = &self.sender_identifier_type;
+        sender_identifier_type.to_string()
+    }
+
+    pub fn get_reciever_identifier_type(&self) -> String {
+        let reciever_identifier_type = &self.reciever_identifier_type;
+        reciever_identifier_type.to_string()
+    }
+
+    pub fn get_amount(&self) -> u32 {
+        let _amount = &self._amount;
+        *_amount
+    }
+
+    pub fn get_party_a(&self) -> String {
+        let party_a = &self.party_a;
+        party_a.to_string()
+    }
+
+    pub fn get_party_b(&self) -> String {
+        let party_b = &self.party_b;
+        party_b.to_string()
+    }
+
+    pub fn get_account_reference(&self) -> String {
+        let account_reference = &self.account_reference;
+        account_reference.to_string()
+    }
+
+    pub fn get_requester(&self) -> String {
+        let _requester = &self._requester;
+        _requester.to_string()
+    }
+
+    pub fn get_remarks(&self) -> String {
+        let _remarks = &self._remarks;
+        _remarks.to_string()
+    }
+
+    pub fn get_queue_time_out_url(&self) -> String {
+        let queue_time_out_url = &self.queue_time_out_url;
+        queue_time_out_url.to_string()
+    }
+
+    pub fn get_result_url(&self) -> String {
+        let result_url = &self.result_url;
+        result_url.to_string()
+    }
 }
 
 #[derive(Debug)]
 pub struct BusinessBuyGoodsInputDetails {
-    //pub api_url: String,
-    pub _initiator: String,
-    pub security_credential: String,
-    pub command_id: String,
-    pub sender_identifier_type: String,
-    pub reciever_identifier_type: String,
-    pub _amount: u32,
-    pub party_a: String,
-    pub party_b: String,
-    pub account_reference: String,
-    pub _requester: String,
-    pub _remarks: String,
-    pub queue_time_out_url: String,
-    pub result_url: String,
+    api_url: String,
+    _initiator: String,
+    security_credential: String,
+    command_id: String,
+    sender_identifier_type: String,
+    reciever_identifier_type: String,
+    _amount: u32,
+    party_a: String,
+    party_b: String,
+    account_reference: String,
+    _requester: String,
+    _remarks: String,
+    queue_time_out_url: String,
+    result_url: String,
+}
+
+impl BusinessBuyGoodsInputDetails {
+    pub fn new(
+        api_url: String,
+        _initiator: String,
+        security_credential: String,
+        command_id: String,
+        sender_identifier_type: String,
+        reciever_identifier_type: String,
+        _amount: u32,
+        party_a: String,
+        party_b: String,
+        account_reference: String,
+        _requester: String,
+        _remarks: String,
+        queue_time_out_url: String,
+        result_url: String,
+    ) -> Result<Self, String> {
+        if api_url.is_empty() || api_url.replace(" ", "").trim().len() == 0 {
+            return Err(String::from("api url is empty"));
+        }
+
+        if _initiator.is_empty() || _initiator.replace(" ", "").trim().len() == 0 {
+            return Err(String::from("initiator is empty"));
+        }
+
+        if security_credential.is_empty() || security_credential.replace(" ", "").trim().len() == 0
+        {
+            return Err(String::from("security credential is empty"));
+        }
+
+        if command_id.is_empty() || command_id.replace(" ", "").trim().len() == 0 {
+            return Err(String::from("command id is empty"));
+        }
+
+        if sender_identifier_type.is_empty()
+            || sender_identifier_type.replace(" ", "").trim().len() == 0
+        {
+            return Err(String::from("sender identifier type is empty"));
+        }
+
+        if reciever_identifier_type.is_empty()
+            || reciever_identifier_type.replace(" ", "").trim().len() == 0
+        {
+            return Err(String::from("reciever identifier type is empty"));
+        }
+
+        if _amount == 0 {
+            return Err(String::from("amount has invalid value"));
+        }
+
+        if party_a.is_empty() || party_a.replace(" ", "").trim().len() == 0 {
+            return Err(String::from("party a is empty"));
+        }
+
+        if party_b.is_empty() || party_b.replace(" ", "").trim().len() == 0 {
+            return Err(String::from("party b is empty"));
+        }
+
+        if account_reference.is_empty() || account_reference.replace(" ", "").trim().len() == 0 {
+            return Err(String::from("account reference is empty"));
+        }
+
+        if _requester.is_empty() || _requester.replace(" ", "").trim().len() == 0 {
+            return Err(String::from("_requester is empty"));
+        }
+
+        if _remarks.is_empty() || _remarks.replace(" ", "").trim().len() == 0 {
+            return Err(String::from("remarks is empty"));
+        }
+
+        if queue_time_out_url.is_empty() || queue_time_out_url.replace(" ", "").trim().len() == 0 {
+            return Err(String::from("queue_time_out url is empty"));
+        }
+
+        if result_url.is_empty() || result_url.replace(" ", "").trim().len() == 0 {
+            return Err(String::from("result url is empty"));
+        }
+
+        Ok(Self {
+            api_url,
+            _initiator,
+            security_credential,
+            command_id,
+            sender_identifier_type,
+            reciever_identifier_type,
+            _amount,
+            party_a,
+            party_b,
+            account_reference,
+            _requester,
+            _remarks,
+            queue_time_out_url,
+            result_url,
+        })
+    }
+
+    pub fn get_api_url(&self) -> String {
+        let api_url = &self.api_url;
+        api_url.to_string()
+    }
+
+    pub fn get_initiator(&self) -> String {
+        let _initiator = &self._initiator;
+        _initiator.to_string()
+    }
+
+    pub fn get_security_credential(&self) -> String {
+        let security_credential = &self.security_credential;
+        security_credential.to_string()
+    }
+
+    pub fn get_command_id(&self) -> String {
+        let command_id = &self.command_id;
+        command_id.to_string()
+    }
+
+    pub fn get_sender_identifier_type(&self) -> String {
+        let sender_identifier_type = &self.sender_identifier_type;
+        sender_identifier_type.to_string()
+    }
+
+    pub fn get_reciever_identifier_type(&self) -> String {
+        let reciever_identifier_type = &self.reciever_identifier_type;
+        reciever_identifier_type.to_string()
+    }
+
+    pub fn get_amount(&self) -> u32 {
+        let _amount = &self._amount;
+        *_amount
+    }
+
+    pub fn get_party_a(&self) -> String {
+        let party_a = &self.party_a;
+        party_a.to_string()
+    }
+
+    pub fn get_party_b(&self) -> String {
+        let party_b = &self.party_b;
+        party_b.to_string()
+    }
+
+    pub fn get_account_reference(&self) -> String {
+        let account_reference = &self.account_reference;
+        account_reference.to_string()
+    }
+
+    pub fn get_requester(&self) -> String {
+        let _requester = &self._requester;
+        _requester.to_string()
+    }
+
+    pub fn get_remarks(&self) -> String {
+        let _remarks = &self._remarks;
+        _remarks.to_string()
+    }
+
+    pub fn get_queue_time_out_url(&self) -> String {
+        let queue_time_out_url = &self.queue_time_out_url;
+        queue_time_out_url.to_string()
+    }
+
+    pub fn get_result_url(&self) -> String {
+        let result_url = &self.result_url;
+        result_url.to_string()
+    }
 }
 
 #[derive(Debug)]

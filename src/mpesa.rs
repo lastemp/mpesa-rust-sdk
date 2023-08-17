@@ -36,10 +36,6 @@ pub struct MpesaGateway {
     consumer_key: String,
     consumer_secret: String,
     auth_token_url: String,
-    //register_url: String,
-    b2c_payment_request_url: String,
-    stk_push_url: String,
-    b2b_payment_request_url: String,
 }
 
 impl MpesaGateway {
@@ -47,20 +43,24 @@ impl MpesaGateway {
         consumer_key: String,
         consumer_secret: String,
         auth_token_url: String,
-        //register_url: String,
-        b2c_payment_request_url: String,
-        stk_push_url: String,
-        b2b_payment_request_url: String,
-    ) -> Self {
-        Self {
+    ) -> Result<Self, String> {
+        if consumer_key.is_empty() || consumer_key.replace(" ", "").trim().len() == 0 {
+            return Err(String::from("consumer key is empty"));
+        }
+
+        if consumer_secret.is_empty() || consumer_secret.replace(" ", "").trim().len() == 0 {
+            return Err(String::from("consumer secret is empty"));
+        }
+
+        if auth_token_url.is_empty() || auth_token_url.replace(" ", "").trim().len() == 0 {
+            return Err(String::from("auth_token url is empty"));
+        }
+
+        Ok(Self {
             consumer_key,
             consumer_secret,
             auth_token_url,
-            //register_url,
-            b2c_payment_request_url,
-            stk_push_url,
-            b2b_payment_request_url,
-        }
+        })
     }
 
     fn get_api_key(&self) -> String {
@@ -888,7 +888,6 @@ impl MpesaGateway {
     > {
         let _output = self.get_auth_token();
         let access_token: String = _output.await;
-        let api_url = &self.b2c_payment_request_url;
         //println!("access_token: {:?}", &access_token);
         /*
         let business_to_customer_response_data = BusinessToCustomerResponseData {
@@ -915,10 +914,7 @@ impl MpesaGateway {
             business_to_customer_error_response_data,
         );
 
-        if access_token.is_empty()
-            || api_url.is_empty()
-            || business_to_customer_details.command_id.is_empty()
-        {
+        if access_token.is_empty() || access_token.replace(" ", "").trim().len() == 0 {
             /*
             println!("access_token: {:?}", &access_token);
             println!(
@@ -933,18 +929,13 @@ impl MpesaGateway {
             };
             return b;
             */
-            println!("access_token or api_url or business_to_customer_details is empty");
+            println!("access_token is empty");
             return Ok(my_output);
             //return Err("access_token or api_url or business_to_customer_details is empty");
             // return error
         }
 
-        let _result = business_to_customer(
-            business_to_customer_details,
-            access_token,
-            api_url.to_string(),
-        )
-        .await;
+        let _result = business_to_customer(business_to_customer_details, access_token).await;
 
         _result
         /*
@@ -988,7 +979,6 @@ impl MpesaGateway {
     > {
         let _output = self.get_auth_token();
         let access_token: String = _output.await;
-        let api_url = &self.stk_push_url;
         //println!("access_token: {:?}", &access_token);
         let customer_to_business_response_data =
             build_customer_to_business_payment_response_data(None, None, None, None, None);
@@ -1001,10 +991,7 @@ impl MpesaGateway {
             customer_to_business_error_response_data,
         );
 
-        if access_token.is_empty()
-            || api_url.is_empty()
-            || customer_to_business_details.business_short_code.is_empty()
-        {
+        if access_token.is_empty() || access_token.replace(" ", "").trim().len() == 0 {
             /*
             println!("access_token: {:?}", &access_token);
             println!(
@@ -1012,7 +999,7 @@ impl MpesaGateway {
                 &customer_to_business_details
             );
             */
-            println!("access_token or api_url or customer_to_business_details is empty");
+            println!("access_token is empty");
             /*
             let b = CustomerToBusinessPaymentResponseData {
                 MerchantRequestID: None,
@@ -1026,12 +1013,8 @@ impl MpesaGateway {
             return Ok(my_output);
         }
 
-        let _result = customer_to_business_payment(
-            customer_to_business_details,
-            access_token,
-            api_url.to_string(),
-        )
-        .await;
+        let _result =
+            customer_to_business_payment(customer_to_business_details, access_token).await;
 
         _result
         /*
@@ -1077,7 +1060,6 @@ impl MpesaGateway {
     > {
         let _output = self.get_auth_token();
         let access_token: String = _output.await;
-        let api_url = &self.b2b_payment_request_url;
         //println!("access_token: {:?}", &access_token);
 
         let business_paybill_response_data =
@@ -1091,10 +1073,7 @@ impl MpesaGateway {
             business_paybill_error_response_data,
         );
 
-        if access_token.is_empty()
-            || api_url.is_empty()
-            || business_paybill_details.command_id.is_empty()
-        {
+        if access_token.is_empty() || access_token.replace(" ", "").trim().len() == 0 {
             /*
             println!("access_token: {:?}", &access_token);
             println!(
@@ -1102,7 +1081,7 @@ impl MpesaGateway {
                 &business_paybill_details
             );
             */
-            println!("access_token or api_url or business_paybill_details is empty");
+            println!("access_token is empty");
             /*
             let b = BusinessPayBillResponseData {
                 OriginatorConversationID: None,
@@ -1115,8 +1094,7 @@ impl MpesaGateway {
             return Ok(my_output);
         }
 
-        let _result =
-            business_paybill(business_paybill_details, access_token, api_url.to_string()).await;
+        let _result = business_paybill(business_paybill_details, access_token).await;
 
         _result
         /*
@@ -1156,7 +1134,6 @@ impl MpesaGateway {
     > {
         let _output = self.get_auth_token();
         let access_token: String = _output.await;
-        let api_url = &self.b2b_payment_request_url;
         //println!("access_token: {:?}", &access_token);
         let business_buy_goods_response_data =
             build_business_buy_goods_response_data(None, None, None, None);
@@ -1169,10 +1146,7 @@ impl MpesaGateway {
             business_buy_goods_error_response_data,
         );
 
-        if access_token.is_empty()
-            || api_url.is_empty()
-            || business_buy_goods_details.command_id.is_empty()
-        {
+        if access_token.is_empty() || access_token.replace(" ", "").trim().len() == 0 {
             /*
             println!("access_token: {:?}", &access_token);
             println!(
@@ -1180,7 +1154,7 @@ impl MpesaGateway {
                 &business_buy_goods_details
             );
             */
-            println!("access_token or api_url or business_buy_goods_details is empty");
+            println!("access_token is empty");
             /*
             let b = BusinessBuyGoodsResponseData {
                 OriginatorConversationID: None,
@@ -1193,12 +1167,7 @@ impl MpesaGateway {
             return Ok(my_output);
         }
 
-        let _result = business_buy_goods(
-            business_buy_goods_details,
-            access_token,
-            api_url.to_string(),
-        )
-        .await;
+        let _result = business_buy_goods(business_buy_goods_details, access_token).await;
 
         _result
         /*
@@ -1674,7 +1643,6 @@ pub async fn register_url(
 pub async fn business_to_customer(
     business_to_customer_details: BusinessToCustomerInputDetails,
     access_token: String,
-    api_url: String,
 ) -> std::result::Result<
     (
         BusinessToCustomerResponseData,
@@ -1682,16 +1650,17 @@ pub async fn business_to_customer(
     ),
     reqwest::Error,
 > {
-    let initiator_name: String = business_to_customer_details.initiator_name;
-    let security_credential: String = business_to_customer_details.security_credential;
-    let command_id: String = business_to_customer_details.command_id;
-    let amount: u32 = business_to_customer_details.amount;
-    let party_a: u32 = business_to_customer_details.party_a;
-    let party_b: String = business_to_customer_details.party_b;
-    let _remarks: String = business_to_customer_details._remarks;
-    let queue_time_out_url: String = business_to_customer_details.queue_time_out_url;
-    let result_url: String = business_to_customer_details.result_url;
-    let _occassion: String = business_to_customer_details._occassion;
+    let api_url: String = business_to_customer_details.get_api_url();
+    let initiator_name: String = business_to_customer_details.get_initiator_name();
+    let security_credential: String = business_to_customer_details.get_security_credential();
+    let command_id: String = business_to_customer_details.get_command_id();
+    let amount: u32 = business_to_customer_details.get_amount();
+    let party_a: u32 = business_to_customer_details.get_party_a();
+    let party_b: String = business_to_customer_details.get_party_b();
+    let _remarks: String = business_to_customer_details.get_remarks();
+    let queue_time_out_url: String = business_to_customer_details.get_queue_time_out_url();
+    let result_url: String = business_to_customer_details.get_result_url();
+    let _occassion: String = business_to_customer_details.get_occassion();
     /*
     let business_to_customer_data = BusinessToCustomerData {
         InitiatorName: initiator_name,
@@ -1897,7 +1866,6 @@ pub async fn business_to_customer(
 pub async fn customer_to_business_payment(
     customer_to_business_payment_details: CustomerToBusinessPaymentInputDetails,
     access_token: String,
-    api_url: String,
 ) -> std::result::Result<
     (
         CustomerToBusinessPaymentResponseData,
@@ -1905,17 +1873,19 @@ pub async fn customer_to_business_payment(
     ),
     reqwest::Error,
 > {
-    let business_short_code: String = customer_to_business_payment_details.business_short_code;
-    let _password: String = customer_to_business_payment_details._password;
-    let time_stamp: String = customer_to_business_payment_details.time_stamp;
-    let transaction_type: String = customer_to_business_payment_details.transaction_type;
-    let _amount: u32 = customer_to_business_payment_details._amount;
-    let party_a: u64 = customer_to_business_payment_details.party_a;
-    let party_b: u32 = customer_to_business_payment_details.party_b;
-    let phone_number: u64 = customer_to_business_payment_details.phone_number;
-    let call_back_url: String = customer_to_business_payment_details.call_back_url;
-    let account_reference: String = customer_to_business_payment_details.account_reference;
-    let transaction_desc: String = customer_to_business_payment_details.transaction_desc;
+    let api_url: String = customer_to_business_payment_details.get_api_url();
+    let business_short_code: String =
+        customer_to_business_payment_details.get_business_short_code();
+    let _password: String = customer_to_business_payment_details.get_password();
+    let time_stamp: String = customer_to_business_payment_details.get_time_stamp();
+    let transaction_type: String = customer_to_business_payment_details.get_transaction_type();
+    let _amount: u32 = customer_to_business_payment_details.get_amount();
+    let party_a: u64 = customer_to_business_payment_details.get_party_a();
+    let party_b: u32 = customer_to_business_payment_details.get_party_b();
+    let phone_number: u64 = customer_to_business_payment_details.get_phone_number();
+    let call_back_url: String = customer_to_business_payment_details.get_call_back_url();
+    let account_reference: String = customer_to_business_payment_details.get_account_reference();
+    let transaction_desc: String = customer_to_business_payment_details.get_transaction_desc();
     /*
     let customer_to_business_data = CustomerToBusinessPaymentData {
         BusinessShortCode: business_short_code,
@@ -2124,7 +2094,6 @@ pub async fn customer_to_business_payment(
 pub async fn business_paybill(
     business_paybill_details: BusinessPayBillInputDetails,
     access_token: String,
-    api_url: String,
 ) -> std::result::Result<
     (
         BusinessPayBillResponseData,
@@ -2132,19 +2101,20 @@ pub async fn business_paybill(
     ),
     reqwest::Error,
 > {
-    let _initiator: String = business_paybill_details._initiator;
-    let security_credential: String = business_paybill_details.security_credential;
-    let command_id: String = business_paybill_details.command_id;
-    let sender_identifier_type: String = business_paybill_details.sender_identifier_type;
-    let reciever_identifier_type: String = business_paybill_details.reciever_identifier_type;
-    let _amount: u32 = business_paybill_details._amount;
-    let party_a: String = business_paybill_details.party_a;
-    let party_b: String = business_paybill_details.party_b;
-    let account_reference: String = business_paybill_details.account_reference;
-    let _requester: String = business_paybill_details._requester;
-    let _remarks: String = business_paybill_details._remarks;
-    let queue_time_out_url: String = business_paybill_details.queue_time_out_url;
-    let result_url: String = business_paybill_details.result_url;
+    let api_url: String = business_paybill_details.get_api_url();
+    let _initiator: String = business_paybill_details.get_initiator();
+    let security_credential: String = business_paybill_details.get_security_credential();
+    let command_id: String = business_paybill_details.get_command_id();
+    let sender_identifier_type: String = business_paybill_details.get_sender_identifier_type();
+    let reciever_identifier_type: String = business_paybill_details.get_reciever_identifier_type();
+    let _amount: u32 = business_paybill_details.get_amount();
+    let party_a: String = business_paybill_details.get_party_a();
+    let party_b: String = business_paybill_details.get_party_b();
+    let account_reference: String = business_paybill_details.get_account_reference();
+    let _requester: String = business_paybill_details.get_requester();
+    let _remarks: String = business_paybill_details.get_remarks();
+    let queue_time_out_url: String = business_paybill_details.get_queue_time_out_url();
+    let result_url: String = business_paybill_details.get_result_url();
     /*
     let business_paybill_data = BusinessPayBillData {
         Initiator: _initiator,
@@ -2345,7 +2315,6 @@ pub async fn business_paybill(
 async fn business_buy_goods(
     business_buy_goods_details: BusinessBuyGoodsInputDetails,
     access_token: String,
-    api_url: String,
 ) -> std::result::Result<
     (
         BusinessBuyGoodsResponseData,
@@ -2353,19 +2322,21 @@ async fn business_buy_goods(
     ),
     reqwest::Error,
 > {
-    let _initiator: String = business_buy_goods_details._initiator;
-    let security_credential: String = business_buy_goods_details.security_credential;
-    let command_id: String = business_buy_goods_details.command_id;
-    let sender_identifier_type: String = business_buy_goods_details.sender_identifier_type;
-    let reciever_identifier_type: String = business_buy_goods_details.reciever_identifier_type;
-    let _amount: u32 = business_buy_goods_details._amount;
-    let party_a: String = business_buy_goods_details.party_a;
-    let party_b: String = business_buy_goods_details.party_b;
-    let account_reference: String = business_buy_goods_details.account_reference;
-    let _requester: String = business_buy_goods_details._requester;
-    let _remarks: String = business_buy_goods_details._remarks;
-    let queue_time_out_url: String = business_buy_goods_details.queue_time_out_url;
-    let result_url: String = business_buy_goods_details.result_url;
+    let api_url: String = business_buy_goods_details.get_api_url();
+    let _initiator: String = business_buy_goods_details.get_initiator();
+    let security_credential: String = business_buy_goods_details.get_security_credential();
+    let command_id: String = business_buy_goods_details.get_command_id();
+    let sender_identifier_type: String = business_buy_goods_details.get_sender_identifier_type();
+    let reciever_identifier_type: String =
+        business_buy_goods_details.get_reciever_identifier_type();
+    let _amount: u32 = business_buy_goods_details.get_amount();
+    let party_a: String = business_buy_goods_details.get_party_a();
+    let party_b: String = business_buy_goods_details.get_party_b();
+    let account_reference: String = business_buy_goods_details.get_account_reference();
+    let _requester: String = business_buy_goods_details.get_requester();
+    let _remarks: String = business_buy_goods_details.get_remarks();
+    let queue_time_out_url: String = business_buy_goods_details.get_queue_time_out_url();
+    let result_url: String = business_buy_goods_details.get_result_url();
     /*
     let business_buy_goods_data = BusinessBuyGoodsData {
         Initiator: _initiator,

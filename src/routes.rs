@@ -97,47 +97,43 @@ pub(crate) async fn register_client_urls(data: web::Data<Pool>) -> impl Responde
         let consumer_secret: String =
             get_settings_details(&data, String::from("consumersecretmpesa"));
         let auth_token_url: String = get_settings_details(&data, String::from("authtokenurlmpesa"));
-        //let register_url: String = String::from("https://sandbox.safaricom.co.ke/mpesa/c2b/v1/registerurl");
-        let b2c_payment_request_url: String = String::from("");
-        let stk_push_url: String = String::from("");
-        let b2b_payment_request_url: String = String::from("");
-        let mpesa_gateway: MpesaGateway = MpesaGateway::new(
-            consumer_key,
-            consumer_secret,
-            auth_token_url,
-            //register_url,
-            b2c_payment_request_url,
-            stk_push_url,
-            b2b_payment_request_url,
-        );
-        let _output = mpesa_gateway.get_register_url(register_url_details);
-        /*
-        let register_url_response_data = _output.await;
-        */
-        let _result: std::result::Result<RegisterUrlResponseData, reqwest::Error> = _output.await;
+        //let mpesa_gateway: MpesaGateway = MpesaGateway::new(consumer_key, consumer_secret, auth_token_url);
+        let _result = MpesaGateway::new(consumer_key, consumer_secret, auth_token_url);
+        if let Ok(mpesa_gateway) = _result {
+            let _output = mpesa_gateway.get_register_url(register_url_details);
+            /*
+            let register_url_response_data = _output.await;
+            */
+            let _result: std::result::Result<RegisterUrlResponseData, reqwest::Error> =
+                _output.await;
 
-        let (register_url_response_data, error_data) = match _result {
-            Ok(a) => (a, None),
-            Err(e) => {
-                println!("server not responding: {:?}", e.to_string());
-                let a = RegisterUrlResponseData {
-                    OriginatorCoversationID: None,
-                    ConversationID: None,
-                    ResponseDescription: None,
-                };
+            let (register_url_response_data, error_data) = match _result {
+                Ok(a) => (a, None),
+                Err(e) => {
+                    println!("server not responding: {:?}", e.to_string());
+                    let a = RegisterUrlResponseData {
+                        OriginatorCoversationID: None,
+                        ConversationID: None,
+                        ResponseDescription: None,
+                    };
 
-                (a, Some(e))
-            }
+                    (a, Some(e))
+                }
+            };
+
+            println!(
+                "register_url_response_data: {:?}",
+                &register_url_response_data
+            );
+        } else if let Err(e) = _result {
+            println!("Data Error: {:?}", e)
+        } else {
+            println!("Unexpected error occured during processing")
         };
-
-        println!(
-            "register_url_response_data: {:?}",
-            &register_url_response_data
-        );
     } else if let Err(e) = _result {
         println!("Data Error: {:?}", e)
     } else {
-        println!("Unexpected error occured")
+        println!("Unexpected error occured during processing")
     };
 
     format!("")
@@ -148,11 +144,6 @@ pub(crate) async fn process_b2c(data: web::Data<Pool>) -> impl Responder {
     let consumer_key: String = get_settings_details(&data, String::from("consumerkeympesa"));
     let consumer_secret: String = get_settings_details(&data, String::from("consumersecretmpesa"));
     let auth_token_url: String = get_settings_details(&data, String::from("authtokenurlmpesa"));
-    //let register_url: String = String::from("");
-    let b2c_payment_request_url: String =
-        String::from("https://sandbox.safaricom.co.ke/mpesa/b2c/v1/paymentrequest");
-    let stk_push_url: String = String::from("");
-    let b2b_payment_request_url: String = String::from("");
 
     let mobile_no = String::from("2547***");
     let amount_paid: u32 = 1500;
@@ -160,7 +151,7 @@ pub(crate) async fn process_b2c(data: web::Data<Pool>) -> impl Responder {
     let _remarks = TRANSACTION_REMARKS.to_string();
     let _occassion = TRANSACTION_OCCASSION.to_string();
 
-    let business_to_customer_data = get_business_to_customer_details(
+    let _result = get_business_to_customer_details(
         &data,
         mobile_no.to_string(),
         amount_paid,
@@ -176,77 +167,73 @@ pub(crate) async fn process_b2c(data: web::Data<Pool>) -> impl Responder {
     );
     */
 
-    let mpesa_gateway: MpesaGateway = MpesaGateway::new(
-        consumer_key,
-        consumer_secret,
-        auth_token_url,
-        //register_url,
-        b2c_payment_request_url,
-        stk_push_url,
-        b2b_payment_request_url,
-    );
-    let _output = mpesa_gateway.get_b2c(business_to_customer_data);
-    //let business_to_customer_response_data = _output.await;
-    let _result: std::result::Result<
-        (
-            BusinessToCustomerResponseData,
-            BusinessToCustomerErrorResponseData,
-        ),
-        reqwest::Error,
-    > = _output.await;
-    //let _result = _output.await;
-    //let business_to_customer_response_data: Result<BusinessToCustomerResponseData, Error> =
-    /*
-    let business_to_customer_response_data = match _result {
-        Ok(x) => x,
-        Err(e) => {
-            println!("server not responding: {:?}", e.to_string());
-            let b = BusinessToCustomerResponseData {
-                OriginatorConversationID: None,
-                ConversationID: None,
-                ResponseCode: None,
-                ResponseDescription: None,
+    if let Ok(business_to_customer_data) = _result {
+        /*
+        let mpesa_gateway: MpesaGateway = MpesaGateway::new(
+            consumer_key,
+            consumer_secret,
+            auth_token_url,
+        );
+        */
+        let _result = MpesaGateway::new(consumer_key, consumer_secret, auth_token_url);
+        if let Ok(mpesa_gateway) = _result {
+            let _output = mpesa_gateway.get_b2c(business_to_customer_data);
+
+            let _result: std::result::Result<
+                (
+                    BusinessToCustomerResponseData,
+                    BusinessToCustomerErrorResponseData,
+                ),
+                reqwest::Error,
+            > = _output.await;
+
+            let (
+                business_to_customer_response_data,
+                business_to_customer_error_response_data,
+                error_data,
+            ) = match _result {
+                Ok(x) => {
+                    let (a, b) = x;
+                    (a, b, None)
+                }
+                Err(e) => {
+                    println!("server not responding: {:?}", e.to_string());
+                    let a = BusinessToCustomerResponseData {
+                        OriginatorConversationID: None,
+                        ConversationID: None,
+                        ResponseCode: None,
+                        ResponseDescription: None,
+                    };
+
+                    let b = BusinessToCustomerErrorResponseData {
+                        requestId: None,
+                        errorCode: None,
+                        errorMessage: None,
+                    };
+
+                    (a, b, Some(e))
+                }
             };
 
-            b
-        }
-    };
-    */
+            println!(
+                "business_to_customer_response_data: {:?}",
+                &business_to_customer_response_data
+            );
 
-    let (business_to_customer_response_data, business_to_customer_error_response_data, error_data) =
-        match _result {
-            Ok(x) => {
-                let (a, b) = x;
-                (a, b, None)
-            }
-            Err(e) => {
-                println!("server not responding: {:?}", e.to_string());
-                let a = BusinessToCustomerResponseData {
-                    OriginatorConversationID: None,
-                    ConversationID: None,
-                    ResponseCode: None,
-                    ResponseDescription: None,
-                };
-
-                let b = BusinessToCustomerErrorResponseData {
-                    requestId: None,
-                    errorCode: None,
-                    errorMessage: None,
-                };
-
-                (a, b, Some(e))
-            }
+            println!(
+                "business_to_customer_error_response_data: {:?}",
+                &business_to_customer_error_response_data
+            );
+        } else if let Err(e) = _result {
+            println!("Data Error: {:?}", e)
+        } else {
+            println!("Unexpected error occured during processing")
         };
-
-    println!(
-        "business_to_customer_response_data: {:?}",
-        &business_to_customer_response_data
-    );
-
-    println!(
-        "business_to_customer_error_response_data: {:?}",
-        &business_to_customer_error_response_data
-    );
+    } else if let Err(e) = _result {
+        println!("Data Error: {:?}", e)
+    } else {
+        println!("Unexpected error occured during processing")
+    };
 
     format!("")
 }
@@ -256,13 +243,8 @@ pub(crate) async fn process_c2b_payment(data: web::Data<Pool>) -> impl Responder
     let consumer_key: String = get_settings_details(&data, String::from("consumerkeympesa"));
     let consumer_secret: String = get_settings_details(&data, String::from("consumersecretmpesa"));
     let auth_token_url: String = get_settings_details(&data, String::from("authtokenurlmpesa"));
-    //let register_url: String = String::from("");
-    let b2c_payment_request_url: String = String::from("");
-
-    //let api_url: String = String::from("https://sandbox.safaricom.co.ke/mpesa/stkpush/v1/processrequest");
     let stk_push_url: String =
         String::from("https://sandbox.safaricom.co.ke/mpesa/stkpush/v1/processrequest");
-    let b2b_payment_request_url: String = String::from("");
     let business_short_code: String = String::from("174***");
     let pass_key: String =
         String::from("***");
@@ -282,7 +264,7 @@ pub(crate) async fn process_c2b_payment(data: web::Data<Pool>) -> impl Responder
     _password.push_str(&pass_key);
     _password.push_str(&time_stamp);
     let encoded_password = general_purpose::STANDARD.encode(_password);
-
+    /*
     let customer_to_business_details: CustomerToBusinessPaymentInputDetails =
         CustomerToBusinessPaymentInputDetails {
             //api_url: api_url,
@@ -298,6 +280,21 @@ pub(crate) async fn process_c2b_payment(data: web::Data<Pool>) -> impl Responder
             account_reference: account_reference,
             transaction_desc: transaction_desc,
         };
+    */
+    let _result = CustomerToBusinessPaymentInputDetails::new(
+        stk_push_url,
+        business_short_code,
+        encoded_password,
+        time_stamp,
+        transaction_type,
+        _amount,
+        party_a,
+        party_b,
+        phone_number,
+        call_back_url,
+        account_reference,
+        transaction_desc,
+    );
 
     /*
     println!(
@@ -305,63 +302,78 @@ pub(crate) async fn process_c2b_payment(data: web::Data<Pool>) -> impl Responder
         &customer_to_business_details
     );
     */
-    let mpesa_gateway: MpesaGateway = MpesaGateway::new(
-        consumer_key,
-        consumer_secret,
-        auth_token_url,
-        //register_url,
-        b2c_payment_request_url,
-        stk_push_url,
-        b2b_payment_request_url,
-    );
-    /*
-    let _output = mpesa_gateway.get_c2b_payment(customer_to_business_details);
-    let customer_to_business_response_data = _output.await;
-    */
-    let _output = mpesa_gateway.get_c2b_payment(customer_to_business_details);
-    let _result: std::result::Result<
-        (
-            CustomerToBusinessPaymentResponseData,
-            CustomerToBusinessPaymentErrorResponseData,
-        ),
-        reqwest::Error,
-    > = _output.await;
 
-    let (customer_to_business_response_data, customer_to_business_error_response_data, error_data) =
-        match _result {
-            Ok(x) => {
-                let (a, b) = x;
-                (a, b, None)
-            }
-            Err(e) => {
-                println!("server not responding: {:?}", e.to_string());
-                let a = CustomerToBusinessPaymentResponseData {
-                    MerchantRequestID: None,
-                    CheckoutRequestID: None,
-                    ResponseCode: None,
-                    ResponseDescription: None,
-                    CustomerMessage: None,
-                };
+    if let Ok(customer_to_business_details) = _result {
+        /*
+        let mpesa_gateway: MpesaGateway = MpesaGateway::new(
+            consumer_key,
+            consumer_secret,
+            auth_token_url,
+        );
+        */
+        let _result = MpesaGateway::new(consumer_key, consumer_secret, auth_token_url);
+        if let Ok(mpesa_gateway) = _result {
+            /*
+            let _output = mpesa_gateway.get_c2b_payment(customer_to_business_details);
+            let customer_to_business_response_data = _output.await;
+            */
+            let _output = mpesa_gateway.get_c2b_payment(customer_to_business_details);
+            let _result: std::result::Result<
+                (
+                    CustomerToBusinessPaymentResponseData,
+                    CustomerToBusinessPaymentErrorResponseData,
+                ),
+                reqwest::Error,
+            > = _output.await;
 
-                let b = CustomerToBusinessPaymentErrorResponseData {
-                    requestId: None,
-                    errorCode: None,
-                    errorMessage: None,
-                };
+            let (
+                customer_to_business_response_data,
+                customer_to_business_error_response_data,
+                error_data,
+            ) = match _result {
+                Ok(x) => {
+                    let (a, b) = x;
+                    (a, b, None)
+                }
+                Err(e) => {
+                    println!("server not responding: {:?}", e.to_string());
+                    let a = CustomerToBusinessPaymentResponseData {
+                        MerchantRequestID: None,
+                        CheckoutRequestID: None,
+                        ResponseCode: None,
+                        ResponseDescription: None,
+                        CustomerMessage: None,
+                    };
 
-                (a, b, Some(e))
-            }
+                    let b = CustomerToBusinessPaymentErrorResponseData {
+                        requestId: None,
+                        errorCode: None,
+                        errorMessage: None,
+                    };
+
+                    (a, b, Some(e))
+                }
+            };
+
+            println!(
+                "customer_to_business_response_data: {:?}",
+                &customer_to_business_response_data
+            );
+
+            println!(
+                "customer_to_business_error_response_data: {:?}",
+                &customer_to_business_error_response_data
+            );
+        } else if let Err(e) = _result {
+            println!("Data Error: {:?}", e)
+        } else {
+            println!("Unexpected error occured during processing")
         };
-
-    println!(
-        "customer_to_business_response_data: {:?}",
-        &customer_to_business_response_data
-    );
-
-    println!(
-        "customer_to_business_error_response_data: {:?}",
-        &customer_to_business_error_response_data
-    );
+    } else if let Err(e) = _result {
+        println!("Data Error: {:?}", e)
+    } else {
+        println!("Unexpected error occured during processing")
+    };
 
     format!("")
 }
@@ -371,11 +383,7 @@ pub(crate) async fn process_business_paybill(data: web::Data<Pool>) -> impl Resp
     let consumer_key: String = get_settings_details(&data, String::from("consumerkeympesa"));
     let consumer_secret: String = get_settings_details(&data, String::from("consumersecretmpesa"));
     let auth_token_url: String = get_settings_details(&data, String::from("authtokenurlmpesa"));
-    //let register_url: String = String::from("");
-    let b2c_payment_request_url: String = String::from("");
 
-    //let api_url: String = String::from("https://sandbox.safaricom.co.ke/mpesa/b2b/v1/paymentrequest");
-    let stk_push_url: String = String::from("");
     let b2b_payment_request_url: String =
         String::from("https://sandbox.safaricom.co.ke/mpesa/b2b/v1/paymentrequest");
     let _initiator: String = String::from("test***");
@@ -391,7 +399,7 @@ pub(crate) async fn process_business_paybill(data: web::Data<Pool>) -> impl Resp
     let _remarks: String = String::from("ok");
     let queue_time_out_url: String = String::from("https://mydomain.com/b2b/queue/");
     let result_url: String = String::from("https://mydomain.com/b2b/result/");
-
+    /*
     let business_paybill_details: BusinessPayBillInputDetails = BusinessPayBillInputDetails {
         _initiator: _initiator,
         security_credential: security_credential,
@@ -407,68 +415,91 @@ pub(crate) async fn process_business_paybill(data: web::Data<Pool>) -> impl Resp
         queue_time_out_url: queue_time_out_url,
         result_url: result_url,
     };
-
-    /*
-    println!(
-        "customer_to_business_details: {:?}",
-        &customer_to_business_details
-    );
     */
-    let mpesa_gateway: MpesaGateway = MpesaGateway::new(
-        consumer_key,
-        consumer_secret,
-        auth_token_url,
-        //register_url,
-        b2c_payment_request_url,
-        stk_push_url,
+    let _result = BusinessPayBillInputDetails::new(
         b2b_payment_request_url,
+        _initiator,
+        security_credential,
+        command_id,
+        sender_identifier_type,
+        reciever_identifier_type,
+        _amount,
+        party_a,
+        party_b,
+        account_reference,
+        _requester,
+        _remarks,
+        queue_time_out_url,
+        result_url,
     );
-    let _output = mpesa_gateway.get_business_paybill(business_paybill_details);
-    /*
-    let business_paybill_response_data = _output.await;
-    */
-    let _result: std::result::Result<
-        (
-            BusinessPayBillResponseData,
-            BusinessPayBillErrorResponseData,
-        ),
-        reqwest::Error,
-    > = _output.await;
 
-    let (business_paybill_response_data, business_paybill_error_response_data, error_data) =
-        match _result {
-            Ok(x) => {
-                let (a, b) = x;
-                (a, b, None)
-            }
-            Err(e) => {
-                println!("server not responding: {:?}", e.to_string());
-                let a = BusinessPayBillResponseData {
-                    OriginatorConversationID: None,
-                    ConversationID: None,
-                    ResponseCode: None,
-                    ResponseDescription: None,
+    if let Ok(business_paybill_details) = _result {
+        /*
+        println!(
+            "customer_to_business_details: {:?}",
+            &customer_to_business_details
+        );
+        */
+        //let mpesa_gateway: MpesaGateway = MpesaGateway::new(consumer_key, consumer_secret, auth_token_url);
+        let _result = MpesaGateway::new(consumer_key, consumer_secret, auth_token_url);
+
+        if let Ok(mpesa_gateway) = _result {
+            let _output = mpesa_gateway.get_business_paybill(business_paybill_details);
+            /*
+            let business_paybill_response_data = _output.await;
+            */
+            let _result: std::result::Result<
+                (
+                    BusinessPayBillResponseData,
+                    BusinessPayBillErrorResponseData,
+                ),
+                reqwest::Error,
+            > = _output.await;
+
+            let (business_paybill_response_data, business_paybill_error_response_data, error_data) =
+                match _result {
+                    Ok(x) => {
+                        let (a, b) = x;
+                        (a, b, None)
+                    }
+                    Err(e) => {
+                        println!("server not responding: {:?}", e.to_string());
+                        let a = BusinessPayBillResponseData {
+                            OriginatorConversationID: None,
+                            ConversationID: None,
+                            ResponseCode: None,
+                            ResponseDescription: None,
+                        };
+
+                        let b = BusinessPayBillErrorResponseData {
+                            requestId: None,
+                            errorCode: None,
+                            errorMessage: None,
+                        };
+
+                        (a, b, Some(e))
+                    }
                 };
 
-                let b = BusinessPayBillErrorResponseData {
-                    requestId: None,
-                    errorCode: None,
-                    errorMessage: None,
-                };
+            println!(
+                "business_paybill_response_data: {:?}",
+                &business_paybill_response_data
+            );
 
-                (a, b, Some(e))
-            }
+            println!(
+                "business_paybill_error_response_data: {:?}",
+                &business_paybill_error_response_data
+            );
+        } else if let Err(e) = _result {
+            println!("Data Error: {:?}", e)
+        } else {
+            println!("Unexpected error occured during processing")
         };
-
-    println!(
-        "business_paybill_response_data: {:?}",
-        &business_paybill_response_data
-    );
-
-    println!(
-        "business_paybill_error_response_data: {:?}",
-        &business_paybill_error_response_data
-    );
+    } else if let Err(e) = _result {
+        println!("Data Error: {:?}", e)
+    } else {
+        println!("Unexpected error occured during processing")
+    };
 
     format!("")
 }
@@ -478,10 +509,7 @@ pub(crate) async fn process_business_buy_goods(data: web::Data<Pool>) -> impl Re
     let consumer_key: String = get_settings_details(&data, String::from("consumerkeympesa"));
     let consumer_secret: String = get_settings_details(&data, String::from("consumersecretmpesa"));
     let auth_token_url: String = get_settings_details(&data, String::from("authtokenurlmpesa"));
-    //let register_url: String = String::from("");
-    let b2c_payment_request_url: String = String::from("");
 
-    let stk_push_url: String = String::from("");
     let b2b_payment_request_url: String =
         String::from("https://sandbox.safaricom.co.ke/mpesa/b2b/v1/paymentrequest");
     let _initiator: String = String::from("test***");
@@ -498,21 +526,22 @@ pub(crate) async fn process_business_buy_goods(data: web::Data<Pool>) -> impl Re
     let queue_time_out_url: String = String::from("https://mydomain.com/b2b/queue/");
     let result_url: String = String::from("https://mydomain.com/b2b/result/");
 
-    let business_buy_goods_details: BusinessBuyGoodsInputDetails = BusinessBuyGoodsInputDetails {
-        _initiator: _initiator,
-        security_credential: security_credential,
-        command_id: command_id,
-        sender_identifier_type: sender_identifier_type,
-        reciever_identifier_type: reciever_identifier_type,
-        _amount: _amount,
-        party_a: party_a,
-        party_b: party_b,
-        account_reference: account_reference,
-        _requester: _requester,
-        _remarks: _remarks,
-        queue_time_out_url: queue_time_out_url,
-        result_url: result_url,
-    };
+    let _result = BusinessBuyGoodsInputDetails::new(
+        b2b_payment_request_url,
+        _initiator,
+        security_credential,
+        command_id,
+        sender_identifier_type,
+        reciever_identifier_type,
+        _amount,
+        party_a,
+        party_b,
+        account_reference,
+        _requester,
+        _remarks,
+        queue_time_out_url,
+        result_url,
+    );
 
     /*
     println!(
@@ -520,62 +549,74 @@ pub(crate) async fn process_business_buy_goods(data: web::Data<Pool>) -> impl Re
         &business_buy_goods_details
     );
     */
-    let mpesa_gateway: MpesaGateway = MpesaGateway::new(
-        consumer_key,
-        consumer_secret,
-        auth_token_url,
-        //register_url,
-        b2c_payment_request_url,
-        stk_push_url,
-        b2b_payment_request_url,
-    );
-    let _output = mpesa_gateway.get_business_buy_goods(business_buy_goods_details);
-    /*
-    let business_buy_goods_response_data = _output.await;
-    */
 
-    let _result: std::result::Result<
-        (
-            BusinessBuyGoodsResponseData,
-            BusinessBuyGoodsErrorResponseData,
-        ),
-        reqwest::Error,
-    > = _output.await;
+    if let Ok(business_buy_goods_details) = _result {
+        /*
+        let mpesa_gateway: MpesaGateway = MpesaGateway::new(
+            consumer_key,
+            consumer_secret,
+            auth_token_url,
+        );
+        */
+        let _result = MpesaGateway::new(consumer_key, consumer_secret, auth_token_url);
+        if let Ok(mpesa_gateway) = _result {
+            let _output = mpesa_gateway.get_business_buy_goods(business_buy_goods_details);
 
-    let (business_buy_goods_response_data, business_buy_goods_error_response_data, error_data) =
-        match _result {
-            Ok(x) => {
-                let (a, b) = x;
-                (a, b, None)
-            }
-            Err(e) => {
-                println!("server not responding: {:?}", e.to_string());
-                let a = BusinessBuyGoodsResponseData {
-                    OriginatorConversationID: None,
-                    ConversationID: None,
-                    ResponseCode: None,
-                    ResponseDescription: None,
-                };
+            let _result: std::result::Result<
+                (
+                    BusinessBuyGoodsResponseData,
+                    BusinessBuyGoodsErrorResponseData,
+                ),
+                reqwest::Error,
+            > = _output.await;
 
-                let b = BusinessBuyGoodsErrorResponseData {
-                    requestId: None,
-                    errorCode: None,
-                    errorMessage: None,
-                };
+            let (
+                business_buy_goods_response_data,
+                business_buy_goods_error_response_data,
+                error_data,
+            ) = match _result {
+                Ok(x) => {
+                    let (a, b) = x;
+                    (a, b, None)
+                }
+                Err(e) => {
+                    println!("server not responding: {:?}", e.to_string());
+                    let a = BusinessBuyGoodsResponseData {
+                        OriginatorConversationID: None,
+                        ConversationID: None,
+                        ResponseCode: None,
+                        ResponseDescription: None,
+                    };
 
-                (a, b, Some(e))
-            }
+                    let b = BusinessBuyGoodsErrorResponseData {
+                        requestId: None,
+                        errorCode: None,
+                        errorMessage: None,
+                    };
+
+                    (a, b, Some(e))
+                }
+            };
+
+            println!(
+                "business_buy_goods_response_data: {:?}",
+                &business_buy_goods_response_data
+            );
+
+            println!(
+                "business_buy_goods_error_response_data: {:?}",
+                &business_buy_goods_error_response_data
+            );
+        } else if let Err(e) = _result {
+            println!("Data Error: {:?}", e)
+        } else {
+            println!("Unexpected error occured during processing")
         };
-
-    println!(
-        "business_buy_goods_response_data: {:?}",
-        &business_buy_goods_response_data
-    );
-
-    println!(
-        "business_buy_goods_error_response_data: {:?}",
-        &business_buy_goods_error_response_data
-    );
+    } else if let Err(e) = _result {
+        println!("Data Error: {:?}", e)
+    } else {
+        println!("Unexpected error occured during processing")
+    };
 
     format!("")
 }
@@ -641,146 +682,140 @@ pub(crate) async fn get_b2c_result(
     let consumer_key: String = get_settings_details(&data, String::from("consumerkeympesa"));
     let consumer_secret: String = get_settings_details(&data, String::from("consumersecretmpesa"));
     let auth_token_url: String = get_settings_details(&data, String::from("authtokenurlmpesa"));
-    //let register_url: String = String::from("");
-    let b2c_payment_request_url: String = String::from("");
-    let stk_push_url: String = String::from("");
-    let b2b_payment_request_url: String = String::from("");
 
-    let mpesa_gateway: MpesaGateway = MpesaGateway::new(
-        consumer_key,
-        consumer_secret,
-        auth_token_url,
-        //register_url,
-        b2c_payment_request_url,
-        stk_push_url,
-        b2b_payment_request_url,
-    );
+    //let mpesa_gateway: MpesaGateway = MpesaGateway::new(consumer_key, consumer_secret, auth_token_url);
+    let _result = MpesaGateway::new(consumer_key, consumer_secret, auth_token_url);
+    if let Ok(mpesa_gateway) = _result {
+        let b2c_result_parameters_output_details =
+            mpesa_gateway.get_b2c_result_parameters_output_details(result_parameters);
 
-    let b2c_result_parameters_output_details =
-        mpesa_gateway.get_b2c_result_parameters_output_details(result_parameters);
+        /*
+        for result_parameter in result_parameters.ResultParameter.iter() {
+            let _key = &result_parameter.Key;
+            let _value = &result_parameter.Value;
 
-    /*
-    for result_parameter in result_parameters.ResultParameter.iter() {
-        let _key = &result_parameter.Key;
-        let _value = &result_parameter.Value;
+            //TransactionAmount
+            if _key
+                .to_string()
+                .to_lowercase()
+                .eq_ignore_ascii_case(&String::from("TransactionAmount"))
+            {
+                transaction_amount = match _value {
+                    MixedTypeValue::StringValue(s) => 0.0,
+                    MixedTypeValue::IntegerValue(i) => *i as f32,
+                    MixedTypeValue::FloatValue(f) => *f,
+                    _ => 0.0,
+                }
+            }
 
-        //TransactionAmount
-        if _key
-            .to_string()
-            .to_lowercase()
-            .eq_ignore_ascii_case(&String::from("TransactionAmount"))
-        {
-            transaction_amount = match _value {
-                MixedTypeValue::StringValue(s) => 0.0,
-                MixedTypeValue::IntegerValue(i) => *i as f32,
-                MixedTypeValue::FloatValue(f) => *f,
-                _ => 0.0,
+            //TransactionReceipt
+            if _key
+                .to_string()
+                .to_lowercase()
+                .eq_ignore_ascii_case(&String::from("TransactionReceipt"))
+            {
+                transaction_receipt = match _value {
+                    MixedTypeValue::StringValue(s) => s.to_string(),
+                    _ => String::from(""),
+                }
+            }
+
+            //B2CRecipientIsRegisteredCustomer
+            if _key
+                .to_string()
+                .to_lowercase()
+                .eq_ignore_ascii_case(&String::from("B2CRecipientIsRegisteredCustomer"))
+            {
+                b2c_recipient_is_registered_customer = match _value {
+                    MixedTypeValue::StringValue(s) => s.to_string(),
+                    _ => String::from(""),
+                }
+            }
+
+            //B2CChargesPaidAccountAvailableFunds
+            if _key
+                .to_string()
+                .to_lowercase()
+                .eq_ignore_ascii_case(&String::from("B2CChargesPaidAccountAvailableFunds"))
+            {
+                b2c_charges_paid_account_available_funds = match _value {
+                    MixedTypeValue::StringValue(s) => 0.0,
+                    MixedTypeValue::IntegerValue(i) => *i as f32,
+                    MixedTypeValue::FloatValue(f) => *f,
+                    _ => 0.0,
+                }
+            }
+
+            //ReceiverPartyPublicName
+            if _key
+                .to_string()
+                .to_lowercase()
+                .eq_ignore_ascii_case(&String::from("ReceiverPartyPublicName"))
+            {
+                receiver_party_public_name = match _value {
+                    MixedTypeValue::StringValue(s) => s.to_string(),
+                    _ => String::from(""),
+                }
+            }
+
+            //TransactionCompletedDateTime
+            if _key
+                .to_string()
+                .to_lowercase()
+                .eq_ignore_ascii_case(&String::from("TransactionCompletedDateTime"))
+            {
+                transaction_completed_date_time = match _value {
+                    MixedTypeValue::StringValue(s) => s.to_string(),
+                    _ => String::from(""),
+                }
+            }
+
+            //B2CUtilityAccountAvailableFunds
+            if _key
+                .to_string()
+                .to_lowercase()
+                .eq_ignore_ascii_case(&String::from("B2CUtilityAccountAvailableFunds"))
+            {
+                b2c_utility_account_available_funds = match _value {
+                    MixedTypeValue::StringValue(s) => 0.0,
+                    MixedTypeValue::IntegerValue(i) => *i as f32,
+                    MixedTypeValue::FloatValue(f) => *f,
+                    _ => 0.0,
+                }
+            }
+
+            //B2CWorkingAccountAvailableFunds
+            if _key
+                .to_string()
+                .to_lowercase()
+                .eq_ignore_ascii_case(&String::from("B2CWorkingAccountAvailableFunds"))
+            {
+                b2c_working_account_available_funds = match _value {
+                    MixedTypeValue::StringValue(s) => 0.0,
+                    MixedTypeValue::IntegerValue(i) => *i as f32,
+                    MixedTypeValue::FloatValue(f) => *f,
+                    _ => 0.0,
+                }
             }
         }
+        */
 
-        //TransactionReceipt
-        if _key
-            .to_string()
-            .to_lowercase()
-            .eq_ignore_ascii_case(&String::from("TransactionReceipt"))
-        {
-            transaction_receipt = match _value {
-                MixedTypeValue::StringValue(s) => s.to_string(),
-                _ => String::from(""),
-            }
-        }
+        println!(
+            "b2c_result_parameters_output_details: {:?}",
+            &b2c_result_parameters_output_details
+        );
 
-        //B2CRecipientIsRegisteredCustomer
-        if _key
-            .to_string()
-            .to_lowercase()
-            .eq_ignore_ascii_case(&String::from("B2CRecipientIsRegisteredCustomer"))
-        {
-            b2c_recipient_is_registered_customer = match _value {
-                MixedTypeValue::StringValue(s) => s.to_string(),
-                _ => String::from(""),
-            }
-        }
+        println!("result_desc: {:?}", &result_desc);
 
-        //B2CChargesPaidAccountAvailableFunds
-        if _key
-            .to_string()
-            .to_lowercase()
-            .eq_ignore_ascii_case(&String::from("B2CChargesPaidAccountAvailableFunds"))
-        {
-            b2c_charges_paid_account_available_funds = match _value {
-                MixedTypeValue::StringValue(s) => 0.0,
-                MixedTypeValue::IntegerValue(i) => *i as f32,
-                MixedTypeValue::FloatValue(f) => *f,
-                _ => 0.0,
-            }
-        }
-
-        //ReceiverPartyPublicName
-        if _key
-            .to_string()
-            .to_lowercase()
-            .eq_ignore_ascii_case(&String::from("ReceiverPartyPublicName"))
-        {
-            receiver_party_public_name = match _value {
-                MixedTypeValue::StringValue(s) => s.to_string(),
-                _ => String::from(""),
-            }
-        }
-
-        //TransactionCompletedDateTime
-        if _key
-            .to_string()
-            .to_lowercase()
-            .eq_ignore_ascii_case(&String::from("TransactionCompletedDateTime"))
-        {
-            transaction_completed_date_time = match _value {
-                MixedTypeValue::StringValue(s) => s.to_string(),
-                _ => String::from(""),
-            }
-        }
-
-        //B2CUtilityAccountAvailableFunds
-        if _key
-            .to_string()
-            .to_lowercase()
-            .eq_ignore_ascii_case(&String::from("B2CUtilityAccountAvailableFunds"))
-        {
-            b2c_utility_account_available_funds = match _value {
-                MixedTypeValue::StringValue(s) => 0.0,
-                MixedTypeValue::IntegerValue(i) => *i as f32,
-                MixedTypeValue::FloatValue(f) => *f,
-                _ => 0.0,
-            }
-        }
-
-        //B2CWorkingAccountAvailableFunds
-        if _key
-            .to_string()
-            .to_lowercase()
-            .eq_ignore_ascii_case(&String::from("B2CWorkingAccountAvailableFunds"))
-        {
-            b2c_working_account_available_funds = match _value {
-                MixedTypeValue::StringValue(s) => 0.0,
-                MixedTypeValue::IntegerValue(i) => *i as f32,
-                MixedTypeValue::FloatValue(f) => *f,
-                _ => 0.0,
-            }
-        }
-    }
-    */
-
-    println!(
-        "b2c_result_parameters_output_details: {:?}",
-        &b2c_result_parameters_output_details
-    );
-
-    println!("result_desc: {:?}", &result_desc);
-
-    println!(
-        "originator_conversation_id: {:?}",
-        &originator_conversation_id
-    );
+        println!(
+            "originator_conversation_id: {:?}",
+            &originator_conversation_id
+        );
+    } else if let Err(e) = _result {
+        println!("Data Error: {:?}", e)
+    } else {
+        println!("Unexpected error occured during processing")
+    };
 
     format!("")
 }
@@ -831,113 +866,112 @@ pub(crate) async fn get_c2bpayment_result(
     let consumer_key: String = get_settings_details(&data, String::from("consumerkeympesa"));
     let consumer_secret: String = get_settings_details(&data, String::from("consumersecretmpesa"));
     let auth_token_url: String = get_settings_details(&data, String::from("authtokenurlmpesa"));
-    //let register_url: String = String::from("");
-    let b2c_payment_request_url: String = String::from("");
-    let stk_push_url: String = String::from("");
-    let b2b_payment_request_url: String = String::from("");
-
+    /*
     let mpesa_gateway: MpesaGateway = MpesaGateway::new(
         consumer_key,
         consumer_secret,
         auth_token_url,
-        //register_url,
-        b2c_payment_request_url,
-        stk_push_url,
-        b2b_payment_request_url,
     );
-
-    /*
-    for _item in list_of_items.iter() {
-        let _name = &_item.Name;
-        let _value = &_item.Value;
-
-        // Amount
-        if _name
-            .to_string()
-            .to_lowercase()
-            .eq_ignore_ascii_case(&String::from("Amount"))
-        {
-            transaction_amount = match _value {
-                MixedTypeValue::StringValue(s) => 0.0,
-                MixedTypeValue::IntegerValue(i) => *i as f32,
-                MixedTypeValue::FloatValue(f) => *f,
-                _ => 0.0,
-            }
-        }
-
-        // TransactionReceipt
-        if _name
-            .to_string()
-            .to_lowercase()
-            .eq_ignore_ascii_case(&String::from("MpesaReceiptNumber"))
-        {
-            transaction_receipt = match _value {
-                MixedTypeValue::StringValue(s) => s.to_string(),
-                _ => String::from(""),
-            }
-        }
-
-        //transaction_date
-        if _name
-            .to_string()
-            .to_lowercase()
-            .eq_ignore_ascii_case(&String::from("TransactionDate"))
-        {
-            transaction_date = match _value {
-                MixedTypeValue::FloatValue(f) => f.to_string(),
-                _ => String::from(""),
-            }
-        }
-
-        // phone_number
-        if _name
-            .to_string()
-            .to_lowercase()
-            .eq_ignore_ascii_case(&String::from("PhoneNumber"))
-        {
-            phone_number = match _value {
-                MixedTypeValue::FloatValue(f) => f.to_string(),
-                _ => String::from(""),
-            }
-        }
-    }
-
-    if transaction_receipt.replace(" ", "").trim().len() > 0 {
-        // Lets insert each entry
-        /*
-        create_b2c_result(
-            &data,
-            *result_type,
-            *result_code,
-            result_desc.to_string(),
-            originator_conversation_id.to_string(),
-            conversation_id.to_string(),
-            transaction_id.to_string(),
-            transaction_amount,
-            transaction_receipt.to_string(),
-            b2c_recipient_is_registered_customer.to_string(),
-            b2c_charges_paid_account_available_funds,
-            receiver_party_public_name.to_string(),
-            transaction_completed_date_time.to_string(),
-            b2c_utility_account_available_funds,
-            b2c_working_account_available_funds,
-            queue_timeout_url.to_string(),
-        );
-        */
-        println!("transaction_receipt: {:?}", &transaction_receipt);
-        println!("transaction_amount: {:?}", &transaction_amount);
-        println!("transaction_date: {:?}", &transaction_date);
-        println!("phone_number: {:?}", &phone_number);
-    }
     */
+    let _result = MpesaGateway::new(consumer_key, consumer_secret, auth_token_url);
+    if let Ok(mpesa_gateway) = _result {
+        /*
+        for _item in list_of_items.iter() {
+            let _name = &_item.Name;
+            let _value = &_item.Value;
 
-    let c2b_payment_result_parameters_output_details =
-        mpesa_gateway.get_c2b_payment_result_parameters_output_details(list_of_items);
+            // Amount
+            if _name
+                .to_string()
+                .to_lowercase()
+                .eq_ignore_ascii_case(&String::from("Amount"))
+            {
+                transaction_amount = match _value {
+                    MixedTypeValue::StringValue(s) => 0.0,
+                    MixedTypeValue::IntegerValue(i) => *i as f32,
+                    MixedTypeValue::FloatValue(f) => *f,
+                    _ => 0.0,
+                }
+            }
 
-    println!(
-        "c2b_payment_result_parameters_output_details: {:?}",
-        &c2b_payment_result_parameters_output_details
-    );
+            // TransactionReceipt
+            if _name
+                .to_string()
+                .to_lowercase()
+                .eq_ignore_ascii_case(&String::from("MpesaReceiptNumber"))
+            {
+                transaction_receipt = match _value {
+                    MixedTypeValue::StringValue(s) => s.to_string(),
+                    _ => String::from(""),
+                }
+            }
+
+            //transaction_date
+            if _name
+                .to_string()
+                .to_lowercase()
+                .eq_ignore_ascii_case(&String::from("TransactionDate"))
+            {
+                transaction_date = match _value {
+                    MixedTypeValue::FloatValue(f) => f.to_string(),
+                    _ => String::from(""),
+                }
+            }
+
+            // phone_number
+            if _name
+                .to_string()
+                .to_lowercase()
+                .eq_ignore_ascii_case(&String::from("PhoneNumber"))
+            {
+                phone_number = match _value {
+                    MixedTypeValue::FloatValue(f) => f.to_string(),
+                    _ => String::from(""),
+                }
+            }
+        }
+
+        if transaction_receipt.replace(" ", "").trim().len() > 0 {
+            // Lets insert each entry
+            /*
+            create_b2c_result(
+                &data,
+                *result_type,
+                *result_code,
+                result_desc.to_string(),
+                originator_conversation_id.to_string(),
+                conversation_id.to_string(),
+                transaction_id.to_string(),
+                transaction_amount,
+                transaction_receipt.to_string(),
+                b2c_recipient_is_registered_customer.to_string(),
+                b2c_charges_paid_account_available_funds,
+                receiver_party_public_name.to_string(),
+                transaction_completed_date_time.to_string(),
+                b2c_utility_account_available_funds,
+                b2c_working_account_available_funds,
+                queue_timeout_url.to_string(),
+            );
+            */
+            println!("transaction_receipt: {:?}", &transaction_receipt);
+            println!("transaction_amount: {:?}", &transaction_amount);
+            println!("transaction_date: {:?}", &transaction_date);
+            println!("phone_number: {:?}", &phone_number);
+        }
+        */
+
+        let c2b_payment_result_parameters_output_details =
+            mpesa_gateway.get_c2b_payment_result_parameters_output_details(list_of_items);
+
+        println!(
+            "c2b_payment_result_parameters_output_details: {:?}",
+            &c2b_payment_result_parameters_output_details
+        );
+    } else if let Err(e) = _result {
+        println!("Data Error: {:?}", e)
+    } else {
+        println!("Unexpected error occured during processing")
+    };
 
     format!("")
 }
@@ -969,168 +1003,162 @@ pub(crate) async fn get_business_paybill_result(
     let consumer_key: String = get_settings_details(&data, String::from("consumerkeympesa"));
     let consumer_secret: String = get_settings_details(&data, String::from("consumersecretmpesa"));
     let auth_token_url: String = get_settings_details(&data, String::from("authtokenurlmpesa"));
-    //let register_url: String = String::from("");
-    let b2c_payment_request_url: String = String::from("");
-    let stk_push_url: String = String::from("");
-    let b2b_payment_request_url: String = String::from("");
 
-    let mpesa_gateway: MpesaGateway = MpesaGateway::new(
-        consumer_key,
-        consumer_secret,
-        auth_token_url,
-        //register_url,
-        b2c_payment_request_url,
-        stk_push_url,
-        b2b_payment_request_url,
-    );
+    //let mpesa_gateway: MpesaGateway = MpesaGateway::new(consumer_key, consumer_secret, auth_token_url);
+    let _result = MpesaGateway::new(consumer_key, consumer_secret, auth_token_url);
+    if let Ok(mpesa_gateway) = _result {
+        /*
+        for result_parameter in result_parameters.ResultParameter.iter() {
+            let _key = &result_parameter.Key;
+            let _value = &result_parameter.Value;
 
-    /*
-    for result_parameter in result_parameters.ResultParameter.iter() {
-        let _key = &result_parameter.Key;
-        let _value = &result_parameter.Value;
+            // DebitAccountBalance
+            if _key
+                .to_string()
+                .to_lowercase()
+                .eq_ignore_ascii_case(&String::from("DebitAccountBalance"))
+            {
+                debit_account_balance = match _value {
+                    MixedTypeValue::StringValue(s) => s.to_string(),
+                    _ => String::from(""),
+                }
+            }
 
-        // DebitAccountBalance
-        if _key
-            .to_string()
-            .to_lowercase()
-            .eq_ignore_ascii_case(&String::from("DebitAccountBalance"))
-        {
-            debit_account_balance = match _value {
-                MixedTypeValue::StringValue(s) => s.to_string(),
-                _ => String::from(""),
+            // Amount
+            if _key
+                .to_string()
+                .to_lowercase()
+                .eq_ignore_ascii_case(&String::from("Amount"))
+            {
+                transaction_amount = match _value {
+                    MixedTypeValue::StringValue(s) => s.to_string(),
+                    _ => String::from(""),
+                }
+            }
+
+            // DebitPartyAffectedAccountBalance
+            if _key
+                .to_string()
+                .to_lowercase()
+                .eq_ignore_ascii_case(&String::from("DebitPartyAffectedAccountBalance"))
+            {
+                debit_party_affected_account_balance = match _value {
+                    MixedTypeValue::StringValue(s) => s.to_string(),
+                    _ => String::from(""),
+                }
+            }
+
+            // TransCompletedTime
+            if _key
+                .to_string()
+                .to_lowercase()
+                .eq_ignore_ascii_case(&String::from("TransCompletedTime"))
+            {
+                trans_completed_time = match _value {
+                    MixedTypeValue::StringValue(s) => s.to_string(),
+                    _ => String::from(""),
+                }
+            }
+
+            // DebitPartyCharges
+            if _key
+                .to_string()
+                .to_lowercase()
+                .eq_ignore_ascii_case(&String::from("DebitPartyCharges"))
+            {
+                debit_party_charges = match _value {
+                    MixedTypeValue::StringValue(s) => s.to_string(),
+                    _ => String::from(""),
+                }
+            }
+
+            // ReceiverPartyPublicName
+            if _key
+                .to_string()
+                .to_lowercase()
+                .eq_ignore_ascii_case(&String::from("ReceiverPartyPublicName"))
+            {
+                receiver_party_public_name = match _value {
+                    MixedTypeValue::StringValue(s) => s.to_string(),
+                    _ => String::from(""),
+                }
+            }
+
+            // Currency
+            if _key
+                .to_string()
+                .to_lowercase()
+                .eq_ignore_ascii_case(&String::from("Currency"))
+            {
+                _currency = match _value {
+                    MixedTypeValue::StringValue(s) => s.to_string(),
+                    _ => String::from(""),
+                }
+            }
+
+            // InitiatorAccountCurrentBalance
+            if _key
+                .to_string()
+                .to_lowercase()
+                .eq_ignore_ascii_case(&String::from("InitiatorAccountCurrentBalance"))
+            {
+                initiator_account_current_balance = match _value {
+                    MixedTypeValue::StringValue(s) => s.to_string(),
+                    _ => String::from(""),
+                }
             }
         }
+        */
 
-        // Amount
-        if _key
-            .to_string()
-            .to_lowercase()
-            .eq_ignore_ascii_case(&String::from("Amount"))
-        {
-            transaction_amount = match _value {
-                MixedTypeValue::StringValue(s) => s.to_string(),
-                _ => String::from(""),
+        let business_paybill_result_parameters_output_details =
+            mpesa_gateway.get_business_paybill_result_parameters_output_details(result_parameters);
+        /*
+        for reference_item in result_data.Result.ReferenceData.ReferenceItem.iter() {
+            let _key = &reference_item.Key;
+            let _value = &reference_item.Value;
+
+            // BillReferenceNumber
+            if _key
+                .to_string()
+                .to_lowercase()
+                .eq_ignore_ascii_case(&String::from("BillReferenceNumber"))
+            {
+                bill_reference_number = match _value {
+                    MixedTypeValue::StringValue(s) => s.to_string(),
+                    _ => String::from(""),
+                }
+            }
+
+            // QueueTimeoutURL
+            if _key
+                .to_string()
+                .to_lowercase()
+                .eq_ignore_ascii_case(&String::from("QueueTimeoutURL"))
+            {
+                queue_timeout_url = match _value {
+                    MixedTypeValue::StringValue(s) => s.to_string(),
+                    _ => String::from(""),
+                }
             }
         }
+        */
+        let business_paybill_Reference_item_output_details =
+            mpesa_gateway.get_business_paybill_Reference_item_output_details(reference_data);
 
-        // DebitPartyAffectedAccountBalance
-        if _key
-            .to_string()
-            .to_lowercase()
-            .eq_ignore_ascii_case(&String::from("DebitPartyAffectedAccountBalance"))
-        {
-            debit_party_affected_account_balance = match _value {
-                MixedTypeValue::StringValue(s) => s.to_string(),
-                _ => String::from(""),
-            }
-        }
+        println!(
+            "business_paybill_result_parameters_output_details: {:?}",
+            &business_paybill_result_parameters_output_details
+        );
 
-        // TransCompletedTime
-        if _key
-            .to_string()
-            .to_lowercase()
-            .eq_ignore_ascii_case(&String::from("TransCompletedTime"))
-        {
-            trans_completed_time = match _value {
-                MixedTypeValue::StringValue(s) => s.to_string(),
-                _ => String::from(""),
-            }
-        }
-
-        // DebitPartyCharges
-        if _key
-            .to_string()
-            .to_lowercase()
-            .eq_ignore_ascii_case(&String::from("DebitPartyCharges"))
-        {
-            debit_party_charges = match _value {
-                MixedTypeValue::StringValue(s) => s.to_string(),
-                _ => String::from(""),
-            }
-        }
-
-        // ReceiverPartyPublicName
-        if _key
-            .to_string()
-            .to_lowercase()
-            .eq_ignore_ascii_case(&String::from("ReceiverPartyPublicName"))
-        {
-            receiver_party_public_name = match _value {
-                MixedTypeValue::StringValue(s) => s.to_string(),
-                _ => String::from(""),
-            }
-        }
-
-        // Currency
-        if _key
-            .to_string()
-            .to_lowercase()
-            .eq_ignore_ascii_case(&String::from("Currency"))
-        {
-            _currency = match _value {
-                MixedTypeValue::StringValue(s) => s.to_string(),
-                _ => String::from(""),
-            }
-        }
-
-        // InitiatorAccountCurrentBalance
-        if _key
-            .to_string()
-            .to_lowercase()
-            .eq_ignore_ascii_case(&String::from("InitiatorAccountCurrentBalance"))
-        {
-            initiator_account_current_balance = match _value {
-                MixedTypeValue::StringValue(s) => s.to_string(),
-                _ => String::from(""),
-            }
-        }
-    }
-    */
-
-    let business_paybill_result_parameters_output_details =
-        mpesa_gateway.get_business_paybill_result_parameters_output_details(result_parameters);
-    /*
-    for reference_item in result_data.Result.ReferenceData.ReferenceItem.iter() {
-        let _key = &reference_item.Key;
-        let _value = &reference_item.Value;
-
-        // BillReferenceNumber
-        if _key
-            .to_string()
-            .to_lowercase()
-            .eq_ignore_ascii_case(&String::from("BillReferenceNumber"))
-        {
-            bill_reference_number = match _value {
-                MixedTypeValue::StringValue(s) => s.to_string(),
-                _ => String::from(""),
-            }
-        }
-
-        // QueueTimeoutURL
-        if _key
-            .to_string()
-            .to_lowercase()
-            .eq_ignore_ascii_case(&String::from("QueueTimeoutURL"))
-        {
-            queue_timeout_url = match _value {
-                MixedTypeValue::StringValue(s) => s.to_string(),
-                _ => String::from(""),
-            }
-        }
-    }
-    */
-    let business_paybill_Reference_item_output_details =
-        mpesa_gateway.get_business_paybill_Reference_item_output_details(reference_data);
-
-    println!(
-        "business_paybill_result_parameters_output_details: {:?}",
-        &business_paybill_result_parameters_output_details
-    );
-
-    println!(
-        "business_paybill_Reference_item_output_details: {:?}",
-        &business_paybill_Reference_item_output_details
-    );
+        println!(
+            "business_paybill_Reference_item_output_details: {:?}",
+            &business_paybill_Reference_item_output_details
+        );
+    } else if let Err(e) = _result {
+        println!("Data Error: {:?}", e)
+    } else {
+        println!("Unexpected error occured during processing")
+    };
 
     /*
     if bill_reference_number.replace(" ", "").trim().len() > 0 {
@@ -1192,6 +1220,7 @@ pub(crate) async fn get_business_paybill_result(
         println!("queue_timeout_url: {:?}", &queue_timeout_url);
     }
     */
+
     format!("")
 }
 
@@ -1222,36 +1251,30 @@ pub(crate) async fn get_business_buy_goods_result(
     let consumer_key: String = get_settings_details(&data, String::from("consumerkeympesa"));
     let consumer_secret: String = get_settings_details(&data, String::from("consumersecretmpesa"));
     let auth_token_url: String = get_settings_details(&data, String::from("authtokenurlmpesa"));
-    //let register_url: String = String::from("");
-    let b2c_payment_request_url: String = String::from("");
-    let stk_push_url: String = String::from("");
-    let b2b_payment_request_url: String = String::from("");
 
-    let mpesa_gateway: MpesaGateway = MpesaGateway::new(
-        consumer_key,
-        consumer_secret,
-        auth_token_url,
-        //register_url,
-        b2c_payment_request_url,
-        stk_push_url,
-        b2b_payment_request_url,
-    );
+    //let mpesa_gateway: MpesaGateway = MpesaGateway::new(consumer_key, consumer_secret, auth_token_url);
+    let _result = MpesaGateway::new(consumer_key, consumer_secret, auth_token_url);
+    if let Ok(mpesa_gateway) = _result {
+        let business_buy_goods_result_parameters_output_details = mpesa_gateway
+            .get_business_buy_goods_result_parameters_output_details(result_parameters);
 
-    let business_buy_goods_result_parameters_output_details =
-        mpesa_gateway.get_business_buy_goods_result_parameters_output_details(result_parameters);
+        let business_buy_goods_reference_item_output_details =
+            mpesa_gateway.get_business_buy_goods_reference_item_output_details(reference_data);
 
-    let business_buy_goods_reference_item_output_details =
-        mpesa_gateway.get_business_buy_goods_reference_item_output_details(reference_data);
+        println!(
+            "business_buy_goods_result_parameters_output_details: {:?}",
+            &business_buy_goods_result_parameters_output_details
+        );
 
-    println!(
-        "business_buy_goods_result_parameters_output_details: {:?}",
-        &business_buy_goods_result_parameters_output_details
-    );
-
-    println!(
-        "business_buy_goods_reference_item_output_details: {:?}",
-        &business_buy_goods_reference_item_output_details
-    );
+        println!(
+            "business_buy_goods_reference_item_output_details: {:?}",
+            &business_buy_goods_reference_item_output_details
+        );
+    } else if let Err(e) = _result {
+        println!("Data Error: {:?}", e)
+    } else {
+        println!("Unexpected error occured during processing")
+    };
 
     /*
     for result_parameter in result_parameters.ResultParameter.iter() {
@@ -1461,28 +1484,25 @@ pub(crate) async fn get_business_paybill_timeout(
     let consumer_key: String = get_settings_details(&data, String::from("consumerkeympesa"));
     let consumer_secret: String = get_settings_details(&data, String::from("consumersecretmpesa"));
     let auth_token_url: String = get_settings_details(&data, String::from("authtokenurlmpesa"));
-    //let register_url: String = String::from("");
-    let b2c_payment_request_url: String = String::from("");
-    let stk_push_url: String = String::from("");
-    let b2b_payment_request_url: String = String::from("");
 
-    let mpesa_gateway: MpesaGateway = MpesaGateway::new(
-        consumer_key,
-        consumer_secret,
-        auth_token_url,
-        //register_url,
-        b2c_payment_request_url,
-        stk_push_url,
-        b2b_payment_request_url,
-    );
+    //let mpesa_gateway: MpesaGateway = MpesaGateway::new(consumer_key, consumer_secret, auth_token_url);
+    let _result = MpesaGateway::new(consumer_key, consumer_secret, auth_token_url);
+    if let Ok(mpesa_gateway) = _result {
+        let business_paybill_timeout_parameters_output_details = mpesa_gateway
+            .get_business_paybill_timeout_parameters_output_details(
+                result_parameter,
+                reference_data,
+            );
 
-    let business_paybill_timeout_parameters_output_details = mpesa_gateway
-        .get_business_paybill_timeout_parameters_output_details(result_parameter, reference_data);
-
-    println!(
-        "business_paybill_timeout_parameters_output_details: {:?}",
-        &business_paybill_timeout_parameters_output_details
-    );
+        println!(
+            "business_paybill_timeout_parameters_output_details: {:?}",
+            &business_paybill_timeout_parameters_output_details
+        );
+    } else if let Err(e) = _result {
+        println!("Data Error: {:?}", e)
+    } else {
+        println!("Unexpected error occured during processing")
+    };
 
     /*
     let result_parameter_key = &result_parameter.ResultParameter.Key;
@@ -1572,28 +1592,31 @@ pub(crate) async fn get_business_buy_goods_timeout(
     let consumer_key: String = get_settings_details(&data, String::from("consumerkeympesa"));
     let consumer_secret: String = get_settings_details(&data, String::from("consumersecretmpesa"));
     let auth_token_url: String = get_settings_details(&data, String::from("authtokenurlmpesa"));
-    //let register_url: String = String::from("");
-    let b2c_payment_request_url: String = String::from("");
-    let stk_push_url: String = String::from("");
-    let b2b_payment_request_url: String = String::from("");
-
+    /*
     let mpesa_gateway: MpesaGateway = MpesaGateway::new(
         consumer_key,
         consumer_secret,
         auth_token_url,
-        //register_url,
-        b2c_payment_request_url,
-        stk_push_url,
         b2b_payment_request_url,
     );
+    */
+    let _result = MpesaGateway::new(consumer_key, consumer_secret, auth_token_url);
+    if let Ok(mpesa_gateway) = _result {
+        let business_buy_goods_timeout_parameters_output_details = mpesa_gateway
+            .get_business_buy_goods_timeout_parameters_output_details(
+                result_parameter,
+                reference_data,
+            );
 
-    let business_buy_goods_timeout_parameters_output_details = mpesa_gateway
-        .get_business_buy_goods_timeout_parameters_output_details(result_parameter, reference_data);
-
-    println!(
-        "business_buy_goods_timeout_parameters_output_details: {:?}",
-        &business_buy_goods_timeout_parameters_output_details
-    );
+        println!(
+            "business_buy_goods_timeout_parameters_output_details: {:?}",
+            &business_buy_goods_timeout_parameters_output_details
+        );
+    } else if let Err(e) = _result {
+        println!("Data Error: {:?}", e)
+    } else {
+        println!("Unexpected error occured during processing")
+    };
     /*
     let result_parameter_key = &result_parameter.ResultParameter.Key;
     let result_parameter_value = &result_parameter.ResultParameter.Value;
@@ -1809,7 +1832,7 @@ fn get_business_to_customer_details(
     my_command_id: String,
     my_remarks: String,
     my_occassion: String,
-) -> BusinessToCustomerInputDetails {
+) -> Result<BusinessToCustomerInputDetails, String> {
     let my_api_url: String = get_settings_details(&data, String::from("b2cpaymentrequesturlmpesa"));
     let my_initiator_name: String =
         get_settings_details(&data, String::from("b2cinitiatornamempesa"));
@@ -1825,7 +1848,7 @@ fn get_business_to_customer_details(
         Ok(a) => a,
         Err(e) => 0,
     };
-
+    /*
     let business_to_customer_data = BusinessToCustomerInputDetails {
         //api_url: my_api_url,
         initiator_name: my_initiator_name,
@@ -1841,4 +1864,21 @@ fn get_business_to_customer_details(
     };
 
     business_to_customer_data
+    */
+
+    let _result = BusinessToCustomerInputDetails::new(
+        my_api_url,
+        my_initiator_name,
+        my_security_credential,
+        my_command_id,
+        my_amount,
+        my_party_a,
+        my_party_b,
+        my_remarks,
+        my_queue_time_out_url,
+        my_result_url,
+        my_occassion,
+    );
+
+    _result
 }
