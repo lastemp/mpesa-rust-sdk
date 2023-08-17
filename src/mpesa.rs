@@ -1326,6 +1326,7 @@ fn build_register_url_response_data(
 }
 
 fn build_business_to_customer_data(
+    originator_conversation_id: String,
     initiator_name: String,
     security_credential: String,
     command_id: String,
@@ -1338,6 +1339,7 @@ fn build_business_to_customer_data(
     _occassion: String,
 ) -> BusinessToCustomerData {
     BusinessToCustomerData {
+        OriginatorConversationID: originator_conversation_id,
         InitiatorName: initiator_name,
         SecurityCredential: security_credential,
         CommandID: command_id,
@@ -1651,6 +1653,7 @@ pub async fn business_to_customer(
     reqwest::Error,
 > {
     let api_url: String = business_to_customer_details.get_api_url();
+    let originator_conversation_id = business_to_customer_details.get_originator_conversation_id();
     let initiator_name: String = business_to_customer_details.get_initiator_name();
     let security_credential: String = business_to_customer_details.get_security_credential();
     let command_id: String = business_to_customer_details.get_command_id();
@@ -1676,6 +1679,7 @@ pub async fn business_to_customer(
     };
     */
     let business_to_customer_data = build_business_to_customer_data(
+        originator_conversation_id,
         initiator_name,
         security_credential,
         command_id,

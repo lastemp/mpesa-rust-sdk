@@ -23,6 +23,7 @@ pub struct RegisterUrlData {
 
 #[derive(Serialize, Debug)]
 pub struct BusinessToCustomerData {
+    pub OriginatorConversationID: String,
     pub InitiatorName: String,
     pub SecurityCredential: String,
     pub CommandID: String,
@@ -458,6 +459,7 @@ impl RegisterUrlInputDetails {
 #[derive(Debug)]
 pub struct BusinessToCustomerInputDetails {
     api_url: String,
+    originator_conversation_id: String,
     initiator_name: String,
     security_credential: String,
     command_id: String,
@@ -473,6 +475,7 @@ pub struct BusinessToCustomerInputDetails {
 impl BusinessToCustomerInputDetails {
     pub fn new(
         api_url: String,
+        originator_conversation_id: String,
         initiator_name: String,
         security_credential: String,
         command_id: String,
@@ -488,6 +491,12 @@ impl BusinessToCustomerInputDetails {
             return Err(String::from("api url is empty"));
         }
 
+        if originator_conversation_id.is_empty()
+            || originator_conversation_id.replace(" ", "").trim().len() == 0
+        {
+            return Err(String::from("originator conversation id is empty"));
+        }
+
         if initiator_name.is_empty() || initiator_name.replace(" ", "").trim().len() == 0 {
             return Err(String::from("initiator name is empty"));
         }
@@ -501,11 +510,33 @@ impl BusinessToCustomerInputDetails {
             return Err(String::from("command id is empty"));
         }
 
+        // SalaryPayment, BusinessPayment, PromotionPayment
+        if command_id
+            .to_lowercase()
+            .eq_ignore_ascii_case(&String::from("SalaryPayment"))
+            || command_id
+                .to_lowercase()
+                .eq_ignore_ascii_case(&String::from("BusinessPayment"))
+            || command_id
+                .to_lowercase()
+                .eq_ignore_ascii_case(&String::from("PromotionPayment"))
+        {
+            // command id is valid
+        } else {
+            return Err(String::from("command id has invalid value"));
+        }
+
         if amount == 0 {
             return Err(String::from("amount has invalid value"));
         }
 
         if party_a == 0 {
+            return Err(String::from("party a has invalid value"));
+        }
+
+        // party_a (5-6 digits) e.g. 123454
+        if party_a.to_string().len() == 5 || party_a.to_string().len() == 6 {
+        } else {
             return Err(String::from("party a has invalid value"));
         }
 
@@ -525,12 +556,11 @@ impl BusinessToCustomerInputDetails {
             return Err(String::from("result url is empty"));
         }
 
-        if _occassion.is_empty() || _occassion.replace(" ", "").trim().len() == 0 {
-            return Err(String::from("occassion is empty"));
-        }
+        // _occassion is optional parameter
 
         Ok(Self {
             api_url,
+            originator_conversation_id,
             initiator_name,
             security_credential,
             command_id,
@@ -547,6 +577,11 @@ impl BusinessToCustomerInputDetails {
     pub fn get_api_url(&self) -> String {
         let api_url = &self.api_url;
         api_url.to_string()
+    }
+
+    pub fn get_originator_conversation_id(&self) -> String {
+        let originator_conversation_id = &self.originator_conversation_id;
+        originator_conversation_id.to_string()
     }
 
     pub fn get_initiator_name(&self) -> String {
@@ -640,6 +675,12 @@ impl CustomerToBusinessPaymentInputDetails {
             return Err(String::from("business short code is empty"));
         }
 
+        // business_short_code (5-6 digits) e.g. 123454
+        if business_short_code.len() == 5 || business_short_code.len() == 6 {
+        } else {
+            return Err(String::from("party a has invalid value"));
+        }
+
         if _password.is_empty() || _password.replace(" ", "").trim().len() == 0 {
             return Err(String::from("password is empty"));
         }
@@ -650,6 +691,19 @@ impl CustomerToBusinessPaymentInputDetails {
 
         if transaction_type.is_empty() || transaction_type.replace(" ", "").trim().len() == 0 {
             return Err(String::from("transaction type is empty"));
+        }
+
+        // CustomerPayBillOnline, CustomerBuyGoodsOnline
+        if transaction_type
+            .to_lowercase()
+            .eq_ignore_ascii_case(&String::from("CustomerPayBillOnline"))
+            || transaction_type
+                .to_lowercase()
+                .eq_ignore_ascii_case(&String::from("CustomerBuyGoodsOnline"))
+        {
+            // transaction_type is valid
+        } else {
+            return Err(String::from("transaction type has invalid value"));
         }
 
         if _amount == 0 {
@@ -664,6 +718,12 @@ impl CustomerToBusinessPaymentInputDetails {
             return Err(String::from("party b has invalid value"));
         }
 
+        // party_b (5-6 digits) e.g. 123454
+        if party_b.to_string().len() == 5 || party_b.to_string().len() == 6 {
+        } else {
+            return Err(String::from("party b has invalid value"));
+        }
+
         if phone_number == 0 {
             return Err(String::from("phone number has invalid value"));
         }
@@ -675,9 +735,20 @@ impl CustomerToBusinessPaymentInputDetails {
         if account_reference.is_empty() || account_reference.replace(" ", "").trim().len() == 0 {
             return Err(String::from("account reference is empty"));
         }
+        // account_reference has a max length of 12 characters
+        else if account_reference.trim().len() > 0 && account_reference.trim().len() <= 12 {
+            // account_reference is valid
+        } else {
+            return Err(String::from("account reference has invalid length"));
+        }
 
         if transaction_desc.is_empty() || transaction_desc.replace(" ", "").trim().len() == 0 {
             return Err(String::from("transaction desc is empty"));
+        }
+        // transaction_desc has a max length of 13 characters
+        else if transaction_desc.trim().len() > 0 && transaction_desc.trim().len() <= 13 {
+        } else {
+            return Err(String::from("transaction desc has invalid value/length"));
         }
 
         Ok(Self {
@@ -809,6 +880,16 @@ impl BusinessPayBillInputDetails {
             return Err(String::from("command id is empty"));
         }
 
+        // BusinessPayBill
+        if command_id
+            .to_lowercase()
+            .eq_ignore_ascii_case(&String::from("BusinessPayBill"))
+        {
+            // command id is valid
+        } else {
+            return Err(String::from("command has invalid value"));
+        }
+
         if sender_identifier_type.is_empty()
             || sender_identifier_type.replace(" ", "").trim().len() == 0
         {
@@ -829,12 +910,30 @@ impl BusinessPayBillInputDetails {
             return Err(String::from("party a is empty"));
         }
 
+        // party_a (5-6 digits) e.g. 123454
+        if party_a.to_string().len() == 5 || party_a.to_string().len() == 6 {
+        } else {
+            return Err(String::from("party a has invalid value"));
+        }
+
         if party_b.is_empty() || party_b.replace(" ", "").trim().len() == 0 {
             return Err(String::from("party b is empty"));
         }
 
+        // party_b (5-6 digits) e.g. 123454
+        if party_b.to_string().len() == 5 || party_b.to_string().len() == 6 {
+        } else {
+            return Err(String::from("party b has invalid value"));
+        }
+
         if account_reference.is_empty() || account_reference.replace(" ", "").trim().len() == 0 {
             return Err(String::from("account reference is empty"));
+        }
+        // account_reference has a max length of 13 characters
+        else if account_reference.trim().len() > 0 && account_reference.trim().len() <= 13 {
+            // account_reference is valid
+        } else {
+            return Err(String::from("account reference has invalid length"));
         }
 
         if _requester.is_empty() || _requester.replace(" ", "").trim().len() == 0 {
@@ -843,6 +942,12 @@ impl BusinessPayBillInputDetails {
 
         if _remarks.is_empty() || _remarks.replace(" ", "").trim().len() == 0 {
             return Err(String::from("remarks is empty"));
+        }
+        // _remarks has a max length of 100 characters
+        else if _remarks.trim().len() > 0 && _remarks.trim().len() <= 100 {
+            // _remarks is valid
+        } else {
+            return Err(String::from("remarks has invalid length"));
         }
 
         if queue_time_out_url.is_empty() || queue_time_out_url.replace(" ", "").trim().len() == 0 {
@@ -994,6 +1099,16 @@ impl BusinessBuyGoodsInputDetails {
             return Err(String::from("command id is empty"));
         }
 
+        // BusinessBuyGoods
+        if command_id
+            .to_lowercase()
+            .eq_ignore_ascii_case(&String::from("BusinessBuyGoods"))
+        {
+            // command id is valid
+        } else {
+            return Err(String::from("command has invalid value"));
+        }
+
         if sender_identifier_type.is_empty()
             || sender_identifier_type.replace(" ", "").trim().len() == 0
         {
@@ -1014,12 +1129,30 @@ impl BusinessBuyGoodsInputDetails {
             return Err(String::from("party a is empty"));
         }
 
+        // party_a (5-6 digits) e.g. 123454
+        if party_a.to_string().len() == 5 || party_a.to_string().len() == 6 {
+        } else {
+            return Err(String::from("party a has invalid value"));
+        }
+
         if party_b.is_empty() || party_b.replace(" ", "").trim().len() == 0 {
             return Err(String::from("party b is empty"));
         }
 
+        // party_b (5-6 digits) e.g. 123454
+        if party_b.to_string().len() == 5 || party_b.to_string().len() == 6 {
+        } else {
+            return Err(String::from("party b has invalid value"));
+        }
+
         if account_reference.is_empty() || account_reference.replace(" ", "").trim().len() == 0 {
             return Err(String::from("account reference is empty"));
+        }
+        // account_reference has a max length of 13 characters
+        else if account_reference.trim().len() > 0 && account_reference.trim().len() <= 13 {
+            // account_reference is valid
+        } else {
+            return Err(String::from("account reference has invalid length"));
         }
 
         if _requester.is_empty() || _requester.replace(" ", "").trim().len() == 0 {
@@ -1028,6 +1161,12 @@ impl BusinessBuyGoodsInputDetails {
 
         if _remarks.is_empty() || _remarks.replace(" ", "").trim().len() == 0 {
             return Err(String::from("remarks is empty"));
+        }
+        // _remarks has a max length of 100 characters
+        else if _remarks.trim().len() > 0 && _remarks.trim().len() <= 100 {
+            // _remarks is valid
+        } else {
+            return Err(String::from("remarks has invalid length"));
         }
 
         if queue_time_out_url.is_empty() || queue_time_out_url.replace(" ", "").trim().len() == 0 {

@@ -149,7 +149,7 @@ pub(crate) async fn process_b2c(data: web::Data<Pool>) -> impl Responder {
     let amount_paid: u32 = 1500;
     let command_id = TRANSACTION_COMMAND_ID.to_string();
     let _remarks = TRANSACTION_REMARKS.to_string();
-    let _occassion = TRANSACTION_OCCASSION.to_string();
+    let _occassion = String::from(""); //TRANSACTION_OCCASSION.to_string();
 
     let _result = get_business_to_customer_details(
         &data,
@@ -255,7 +255,7 @@ pub(crate) async fn process_c2b_payment(data: web::Data<Pool>) -> impl Responder
     let party_b: u32 = 174***;
     let phone_number: u64 = 2547***;
     let call_back_url: String = String::from("https://mydomain.com/path");
-    let account_reference: String = String::from("Company X LTD");
+    let account_reference: String = String::from("Company X");
     let transaction_desc: String = String::from("Payment of X");
 
     // _password = Shortcode+Passkey+Timestamp)
@@ -1834,6 +1834,7 @@ fn get_business_to_customer_details(
     my_occassion: String,
 ) -> Result<BusinessToCustomerInputDetails, String> {
     let my_api_url: String = get_settings_details(&data, String::from("b2cpaymentrequesturlmpesa"));
+    let my_originator_conversation_id = Local::now().format("%Y%m%d%H%M%S%3f").to_string(); // test only
     let my_initiator_name: String =
         get_settings_details(&data, String::from("b2cinitiatornamempesa"));
     let my_security_credential: String =
@@ -1868,6 +1869,7 @@ fn get_business_to_customer_details(
 
     let _result = BusinessToCustomerInputDetails::new(
         my_api_url,
+        my_originator_conversation_id,
         my_initiator_name,
         my_security_credential,
         my_command_id,
