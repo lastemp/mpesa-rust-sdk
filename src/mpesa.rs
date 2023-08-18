@@ -8,6 +8,7 @@ use actix_web::web;
 use chrono::prelude::*;
 use reqwest::header::HeaderMap;
 use reqwest::header::{ACCEPT, CONTENT_TYPE};
+use reqwest::Response;
 use reqwest::StatusCode;
 use serde::{Deserialize, Serialize};
 
@@ -783,7 +784,7 @@ impl MpesaGateway {
     }
     */
 
-    pub async fn get_auth_token(&self) -> String {
+    async fn get_auth_token(&self) -> std::result::Result<String, String> {
         let api_key = self.get_api_key();
         //println!("api_key: {:?}", &api_key);
         let api_url = &self.auth_token_url;
@@ -807,9 +808,11 @@ impl MpesaGateway {
 
         access_token
         */
-        let xy = generate_auth_token(api_key, api_url.to_string()).await;
+        let _result = generate_auth_token(api_key, api_url.to_string()).await;
 
-        let access_token: String = match xy {
+        _result
+        /*
+        let access_token: String = match _result {
             Ok(a) => {
                 if !a.is_empty() {
                     let mut access_token = AUTHORISATION_BEARER.to_string();
@@ -826,12 +829,48 @@ impl MpesaGateway {
         };
 
         access_token
+        */
+    }
+
+    fn parse_auth_token(&self, access_token_result: String) -> String {
+        /*
+        let access_token: String = match access_token_result {
+            Ok(a) => {
+                if !a.is_empty() {
+                    let mut access_token = AUTHORISATION_BEARER.to_string();
+                    let k = " "; // Separator
+                    access_token.push_str(k);
+                    access_token.push_str(&a);
+
+                    access_token
+                } else {
+                    String::from("")
+                }
+            }
+            Err(e) => String::from(""),
+        };
+        */
+        let access_token: String = if !access_token_result.is_empty()
+            && access_token_result.replace(" ", "").trim().len() > 0
+        {
+            let mut access_token = AUTHORISATION_BEARER.to_string();
+            let k = " "; // Separator
+            access_token.push_str(k);
+            access_token.push_str(&access_token_result);
+
+            access_token
+        } else {
+            String::from("")
+        };
+
+        access_token
     }
 
     pub async fn get_register_url(
         &self,
         register_url_details: RegisterUrlInputDetails,
     ) -> std::result::Result<RegisterUrlResponseData, reqwest::Error> {
+        /*
         let _output = self.get_auth_token();
         let access_token: String = _output.await;
         //let api_url = &self.register_url;
@@ -851,29 +890,45 @@ impl MpesaGateway {
             */
             return Ok(register_url_response_data);
         }
+        */
 
+        /*
         let _result = register_url(register_url_details, access_token).await;
 
         _result
-        /*
-        let register_url_response_data: RegisterUrlResponseData = match _result {
-            Ok(a) => a,
-            Err(e) => {
-                /*
-                let b = RegisterUrlResponseData {
-                    OriginatorCoversationID: None,
-                    ConversationID: None,
-                    ResponseDescription: None,
-                };
+        */
 
-                b
-                */
-                register_url_response_data
-            }
+        let _output = self.get_auth_token();
+
+        let _result = _output.await;
+
+        let output_result = if let Ok(access_token_result) = _result {
+            let access_token: String = self.parse_auth_token(access_token_result);
+
+            let _result = register_url(register_url_details, access_token).await;
+
+            _result
+        } else if let Err(e) = _result {
+            //println!("Data Error: {:?}", e);
+            let _x = Local::now().format("%Y%m%d%H%M%S%3f").to_string();
+            let _y = Local::now().format("%Y%m%d%H%M%S%3f").to_string();
+            let mut _z = String::from("generate oauth: ");
+            _z.push_str(&e);
+            let register_url_response_data =
+                build_register_url_response_data(Some(_x), Some(_y), Some(_z));
+            Ok(register_url_response_data)
+        } else {
+            //println!("Unexpected error occured during processing");
+            let _x = Local::now().format("%Y%m%d%H%M%S%3f").to_string();
+            let _y = Local::now().format("%Y%m%d%H%M%S%3f").to_string();
+            let mut _z = String::from("generate oauth: ");
+            _z.push_str(&String::from("Unexpected error occured during processing"));
+            let register_url_response_data =
+                build_register_url_response_data(Some(_x), Some(_y), Some(_z));
+            Ok(register_url_response_data)
         };
 
-        register_url_response_data
-        */
+        output_result
     }
 
     pub async fn get_b2c(
@@ -886,23 +941,10 @@ impl MpesaGateway {
         ),
         reqwest::Error,
     > {
+        /*
         let _output = self.get_auth_token();
         let access_token: String = _output.await;
-        //println!("access_token: {:?}", &access_token);
-        /*
-        let business_to_customer_response_data = BusinessToCustomerResponseData {
-            OriginatorConversationID: None,
-            ConversationID: None,
-            ResponseCode: None,
-            ResponseDescription: None,
-        };
 
-        let business_to_customer_error_response_data = BusinessToCustomerErrorResponseData {
-            requestId: None,
-            errorCode: None,
-            errorMessage: None,
-        };
-        */
         let business_to_customer_response_data =
             build_business_to_customer_response_data(None, None, None, None);
 
@@ -915,56 +957,68 @@ impl MpesaGateway {
         );
 
         if access_token.is_empty() || access_token.replace(" ", "").trim().len() == 0 {
-            /*
-            println!("access_token: {:?}", &access_token);
-            println!(
-                "business_to_customer_details: {:?}",
-                &business_to_customer_details
-            );
-            let b = BusinessToCustomerResponseData {
-                OriginatorConversationID: None,
-                ConversationID: None,
-                ResponseCode: None,
-                ResponseDescription: None,
-            };
-            return b;
-            */
             println!("access_token is empty");
             return Ok(my_output);
-            //return Err("access_token or api_url or business_to_customer_details is empty");
-            // return error
         }
 
         let _result = business_to_customer(business_to_customer_details, access_token).await;
 
         _result
-        /*
-        let _result = business_to_customer(
-            business_to_customer_details,
-            access_token,
-            api_url.to_string(),
-        )
-        .await;
+        */
 
-        let business_to_customer_response_data: BusinessToCustomerResponseData = match _result {
-            Ok(a) => a,
-            Err(e) => {
-                /*
-                let b = BusinessToCustomerResponseData {
-                    OriginatorConversationID: None,
-                    ConversationID: None,
-                    ResponseCode: None,
-                    ResponseDescription: None,
-                };
+        //
 
-                b
-                */
-                business_to_customer_response_data
-            }
+        let _output = self.get_auth_token();
+
+        let _result = _output.await;
+
+        let output_result = if let Ok(access_token_result) = _result {
+            let access_token: String = self.parse_auth_token(access_token_result);
+
+            let _result = business_to_customer(business_to_customer_details, access_token).await;
+
+            _result
+        } else if let Err(e) = _result {
+            //println!("Data Error: {:?}", e);
+            let _x = Local::now().format("%Y%m%d%H%M%S%3f").to_string();
+            let _y = Local::now().format("%Y%m%d%H%M%S%3f").to_string();
+            let mut _z = String::from("generate oauth: ");
+            _z.push_str(&e);
+
+            let business_to_customer_response_data =
+                build_business_to_customer_response_data(None, None, None, None);
+
+            let business_to_customer_error_response_data =
+                build_business_to_customer_error_response_data(Some(_x), Some(_y), Some(_z));
+
+            let my_output = (
+                business_to_customer_response_data,
+                business_to_customer_error_response_data,
+            );
+
+            Ok(my_output)
+        } else {
+            //println!("Unexpected error occured during processing");
+            let _x = Local::now().format("%Y%m%d%H%M%S%3f").to_string();
+            let _y = Local::now().format("%Y%m%d%H%M%S%3f").to_string();
+            let mut _z = String::from("generate oauth: ");
+            _z.push_str(&String::from("Unexpected error occured during processing"));
+
+            let business_to_customer_response_data =
+                build_business_to_customer_response_data(None, None, None, None);
+
+            let business_to_customer_error_response_data =
+                build_business_to_customer_error_response_data(Some(_x), Some(_y), Some(_z));
+
+            let my_output = (
+                business_to_customer_response_data,
+                business_to_customer_error_response_data,
+            );
+
+            Ok(my_output)
         };
 
-        business_to_customer_response_data
-        */
+        output_result
     }
 
     pub async fn get_c2b_payment(
@@ -977,6 +1031,7 @@ impl MpesaGateway {
         ),
         reqwest::Error,
     > {
+        /*
         let _output = self.get_auth_token();
         let access_token: String = _output.await;
         //println!("access_token: {:?}", &access_token);
@@ -992,24 +1047,8 @@ impl MpesaGateway {
         );
 
         if access_token.is_empty() || access_token.replace(" ", "").trim().len() == 0 {
-            /*
-            println!("access_token: {:?}", &access_token);
-            println!(
-                "customer_to_business_details: {:?}",
-                &customer_to_business_details
-            );
-            */
             println!("access_token is empty");
-            /*
-            let b = CustomerToBusinessPaymentResponseData {
-                MerchantRequestID: None,
-                CheckoutRequestID: None,
-                ResponseCode: None,
-                ResponseDescription: None,
-                CustomerMessage: None,
-            };
-            return b;
-            */
+
             return Ok(my_output);
         }
 
@@ -1017,35 +1056,68 @@ impl MpesaGateway {
             customer_to_business_payment(customer_to_business_details, access_token).await;
 
         _result
-        /*
-        let _result = customer_to_business_payment(
-            customer_to_business_details,
-            access_token,
-            api_url.to_string(),
-        )
-        .await;
-
-        let customer_to_business_response_data: CustomerToBusinessPaymentResponseData =
-            match _result {
-                Ok(a) => a,
-                Err(e) => {
-                    /*
-                    let b = CustomerToBusinessPaymentResponseData {
-                        MerchantRequestID: None,
-                        CheckoutRequestID: None,
-                        ResponseCode: None,
-                        ResponseDescription: None,
-                        CustomerMessage: None,
-                    };
-
-                    b
-                    */
-                    customer_to_business_response_data
-                }
-            };
-
-        customer_to_business_response_data
         */
+
+        let _output = self.get_auth_token();
+
+        let _result = _output.await;
+
+        let output_result = if let Ok(access_token_result) = _result {
+            let access_token: String = self.parse_auth_token(access_token_result);
+
+            let _result =
+                customer_to_business_payment(customer_to_business_details, access_token).await;
+
+            _result
+        } else if let Err(e) = _result {
+            //println!("Data Error: {:?}", e);
+            let _x = Local::now().format("%Y%m%d%H%M%S%3f").to_string();
+            let _y = Local::now().format("%Y%m%d%H%M%S%3f").to_string();
+            let mut _z = String::from("generate oauth: ");
+            _z.push_str(&e);
+
+            let customer_to_business_response_data =
+                build_customer_to_business_payment_response_data(None, None, None, None, None);
+
+            let customer_to_business_error_response_data =
+                build_customer_to_business_payment_error_response_data(
+                    Some(_x),
+                    Some(_y),
+                    Some(_z),
+                );
+
+            let my_output = (
+                customer_to_business_response_data,
+                customer_to_business_error_response_data,
+            );
+
+            Ok(my_output)
+        } else {
+            //println!("Unexpected error occured during processing");
+            let _x = Local::now().format("%Y%m%d%H%M%S%3f").to_string();
+            let _y = Local::now().format("%Y%m%d%H%M%S%3f").to_string();
+            let mut _z = String::from("generate oauth: ");
+            _z.push_str(&String::from("Unexpected error occured during processing"));
+
+            let customer_to_business_response_data =
+                build_customer_to_business_payment_response_data(None, None, None, None, None);
+
+            let customer_to_business_error_response_data =
+                build_customer_to_business_payment_error_response_data(
+                    Some(_x),
+                    Some(_y),
+                    Some(_z),
+                );
+
+            let my_output = (
+                customer_to_business_response_data,
+                customer_to_business_error_response_data,
+            );
+
+            Ok(my_output)
+        };
+
+        output_result
     }
 
     pub async fn get_business_paybill(
@@ -1058,6 +1130,7 @@ impl MpesaGateway {
         ),
         reqwest::Error,
     > {
+        /*
         let _output = self.get_auth_token();
         let access_token: String = _output.await;
         //println!("access_token: {:?}", &access_token);
@@ -1074,52 +1147,65 @@ impl MpesaGateway {
         );
 
         if access_token.is_empty() || access_token.replace(" ", "").trim().len() == 0 {
-            /*
-            println!("access_token: {:?}", &access_token);
-            println!(
-                "business_paybill_details: {:?}",
-                &business_paybill_details
-            );
-            */
             println!("access_token is empty");
-            /*
-            let b = BusinessPayBillResponseData {
-                OriginatorConversationID: None,
-                ConversationID: None,
-                ResponseCode: None,
-                ResponseDescription: None,
-            };
-            return b;
-            */
             return Ok(my_output);
         }
 
         let _result = business_paybill(business_paybill_details, access_token).await;
 
         _result
-        /*
-        let _result =
-            business_paybill(business_paybill_details, access_token, api_url.to_string()).await;
+        */
+        let _output = self.get_auth_token();
 
-        let business_paybill_response_data: BusinessPayBillResponseData = match _result {
-            Ok(a) => a,
-            Err(e) => {
-                /*
-                let b = BusinessPayBillResponseData {
-                    OriginatorConversationID: None,
-                    ConversationID: None,
-                    ResponseCode: None,
-                    ResponseDescription: None,
-                };
+        let _result = _output.await;
 
-                b
-                */
-                business_paybill_response_data
-            }
+        let output_result = if let Ok(access_token_result) = _result {
+            let access_token: String = self.parse_auth_token(access_token_result);
+
+            let _result = business_paybill(business_paybill_details, access_token).await;
+
+            _result
+        } else if let Err(e) = _result {
+            //println!("Data Error: {:?}", e);
+            let _x = Local::now().format("%Y%m%d%H%M%S%3f").to_string();
+            let _y = Local::now().format("%Y%m%d%H%M%S%3f").to_string();
+            let mut _z = String::from("generate oauth: ");
+            _z.push_str(&e);
+
+            let business_paybill_response_data =
+                build_business_paybill_response_data(None, None, None, None);
+
+            let business_paybill_error_response_data =
+                build_business_paybill_error_response_data(Some(_x), Some(_y), Some(_z));
+
+            let my_output = (
+                business_paybill_response_data,
+                business_paybill_error_response_data,
+            );
+
+            Ok(my_output)
+        } else {
+            //println!("Unexpected error occured during processing");
+            let _x = Local::now().format("%Y%m%d%H%M%S%3f").to_string();
+            let _y = Local::now().format("%Y%m%d%H%M%S%3f").to_string();
+            let mut _z = String::from("generate oauth: ");
+            _z.push_str(&String::from("Unexpected error occured during processing"));
+
+            let business_paybill_response_data =
+                build_business_paybill_response_data(None, None, None, None);
+
+            let business_paybill_error_response_data =
+                build_business_paybill_error_response_data(Some(_x), Some(_y), Some(_z));
+
+            let my_output = (
+                business_paybill_response_data,
+                business_paybill_error_response_data,
+            );
+
+            Ok(my_output)
         };
 
-        business_paybill_response_data
-        */
+        output_result
     }
 
     pub async fn get_business_buy_goods(
@@ -1132,6 +1218,7 @@ impl MpesaGateway {
         ),
         reqwest::Error,
     > {
+        /*
         let _output = self.get_auth_token();
         let access_token: String = _output.await;
         //println!("access_token: {:?}", &access_token);
@@ -1147,49 +1234,67 @@ impl MpesaGateway {
         );
 
         if access_token.is_empty() || access_token.replace(" ", "").trim().len() == 0 {
-            /*
-            println!("access_token: {:?}", &access_token);
-            println!(
-                "business_buy_goods_details: {:?}",
-                &business_buy_goods_details
-            );
-            */
             println!("access_token is empty");
-            /*
-            let b = BusinessBuyGoodsResponseData {
-                OriginatorConversationID: None,
-                ConversationID: None,
-                ResponseCode: None,
-                ResponseDescription: None,
-            };
-            return b;
-            */
+
             return Ok(my_output);
         }
 
         let _result = business_buy_goods(business_buy_goods_details, access_token).await;
 
         _result
-        /*
-        let business_buy_goods_response_data: BusinessBuyGoodsResponseData = match _result {
-            Ok(a) => a,
-            Err(e) => {
-                /*
-                let b = BusinessBuyGoodsResponseData {
-                    OriginatorConversationID: None,
-                    ConversationID: None,
-                    ResponseCode: None,
-                    ResponseDescription: None,
-                };
+        */
 
-                b
-                */
-                business_buy_goods_response_data
-            }
+        let _output = self.get_auth_token();
+
+        let _result = _output.await;
+
+        let output_result = if let Ok(access_token_result) = _result {
+            let access_token: String = self.parse_auth_token(access_token_result);
+
+            let _result = business_buy_goods(business_buy_goods_details, access_token).await;
+
+            _result
+        } else if let Err(e) = _result {
+            //println!("Data Error: {:?}", e);
+            let _x = Local::now().format("%Y%m%d%H%M%S%3f").to_string();
+            let _y = Local::now().format("%Y%m%d%H%M%S%3f").to_string();
+            let mut _z = String::from("generate oauth: ");
+            _z.push_str(&e);
+
+            let business_buy_goods_response_data =
+                build_business_buy_goods_response_data(None, None, None, None);
+
+            let business_buy_goods_error_response_data =
+                build_business_buy_goods_error_response_data(Some(_x), Some(_y), Some(_z));
+
+            let my_output = (
+                business_buy_goods_response_data,
+                business_buy_goods_error_response_data,
+            );
+
+            Ok(my_output)
+        } else {
+            //println!("Unexpected error occured during processing");
+            let _x = Local::now().format("%Y%m%d%H%M%S%3f").to_string();
+            let _y = Local::now().format("%Y%m%d%H%M%S%3f").to_string();
+            let mut _z = String::from("generate oauth: ");
+            _z.push_str(&String::from("Unexpected error occured during processing"));
+
+            let business_buy_goods_response_data =
+                build_business_buy_goods_response_data(None, None, None, None);
+
+            let business_buy_goods_error_response_data =
+                build_business_buy_goods_error_response_data(Some(_x), Some(_y), Some(_z));
+
+            let my_output = (
+                business_buy_goods_response_data,
+                business_buy_goods_error_response_data,
+            );
+
+            Ok(my_output)
         };
 
-        business_buy_goods_response_data
-        */
+        output_result
     }
 }
 
@@ -1465,10 +1570,18 @@ fn build_headers(access_token: String) -> HeaderMap {
     headers
 }
 
+async fn parse_auth_token_response_data(
+    response: Response,
+) -> std::result::Result<AuthTokenResponseData, reqwest::Error> {
+    let auth_token_response_data = response.json::<AuthTokenResponseData>().await?;
+
+    Ok(auth_token_response_data)
+}
+
 async fn generate_auth_token(
     api_key: String,
     api_url: String,
-) -> std::result::Result<String, reqwest::Error> {
+) -> std::result::Result<String, String> {
     let client = reqwest::Client::new();
     let mut access_token = String::from("");
     // "%Y-%m-%d %H:%M:%S" i.e "yyyy-MM-dd HH:mm:ss"
@@ -1488,37 +1601,58 @@ async fn generate_auth_token(
 
     match res {
         Err(e) => {
-            println!("server not responding");
+            //println!("server not responding");
+            return Err(e.to_string());
         }
         Ok(response) => {
             match response.status() {
                 StatusCode::OK => {
-                    let date_from_mpesa = Local::now().format("%Y-%m-%d %H:%M:%S%.3f").to_string();
+                    //let date_from_mpesa = Local::now().format("%Y-%m-%d %H:%M:%S%.3f").to_string();
                     let k = String::from(""); //Default value.
 
-                    let my_output = response.json::<AuthTokenResponseData>().await?;
+                    //let my_output = response.json::<AuthTokenResponseData>().await?;
 
                     //let access_token = &my_output.access_token.as_ref().unwrap_or(&k);
+                    /*
                     let _access_token = &my_output.access_token.as_ref().unwrap_or(&k);
                     access_token = _access_token.to_string();
-                    /*
-                    let expires_in = &my_output.expires_in.as_ref().unwrap_or(&k);
+                    */
 
-                    let expires_in: u32 = match expires_in.parse::<u32>() {
-                        Ok(a) => a,
-                        Err(e) => 0,
+                    /*
+                    let _result: std::result::Result<AuthTokenResponseData, reqwest::Error> =
+                        Ok(response.json::<AuthTokenResponseData>().await?);
+                    */
+
+                    let _output = parse_auth_token_response_data(response);
+                    let _result = _output.await;
+                    /*
+                    let access_token: String = match _result {
+                        Ok(_x) => {
+                            let _access_token = _x.access_token.as_ref().unwrap_or(&k);
+                            _access_token.to_string()
+                        }
+                        Err(e) => e.to_string(),
+                    };
+                    */
+                    if let Ok(_x) = _result {
+                        let _access_token = _x.access_token.as_ref().unwrap_or(&k);
+                        let access_token = _access_token.to_string();
+
+                        return Ok(access_token);
+                    } else if let Err(e) = _result {
+                        let err_data = e.to_string();
+                        return Err(err_data);
+                    } else {
+                        let err_data = String::from("auth token failed to be generated");
+                        return Err(err_data);
                     };
 
-                    create_mpesa_access_token(
-                        &data,
-                        access_token.to_string(),
-                        expires_in,
-                        date_to_mpesa,
-                        date_from_mpesa,
-                    );
-                    */
+                    //return Ok(access_token);
                 }
-                s => println!("Received response status: {:?}", s),
+                s => {
+                    //println!("Received response status: {:?}", s);
+                    return Err(response.status().to_string());
+                }
             }
         }
     };
