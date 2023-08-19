@@ -220,73 +220,80 @@ impl MpesaGateway {
     pub fn get_c2b_payment_result_parameters_output_details(
         &self,
         list_of_items: &Vec<ItemDetails>,
-    ) -> C2BPaymentResultParametersOutputDetails {
+    ) -> Option<C2BPaymentResultParametersOutputDetails> {
         let mut transaction_amount: f32 = 0.0;
         let mut transaction_receipt = String::from("");
         let mut transaction_date = String::from("");
         let mut phone_number = String::from("");
 
-        for _item in list_of_items.iter() {
-            let _name = &_item.Name;
-            let _value = &_item.Value;
-
-            // Amount
-            if _name
-                .to_string()
-                .to_lowercase()
-                .eq_ignore_ascii_case(&String::from("Amount"))
-            {
-                transaction_amount = match _value {
-                    MixedTypeValue::StringValue(s) => 0.0,
-                    MixedTypeValue::IntegerValue(i) => *i as f32,
-                    MixedTypeValue::FloatValue(f) => *f,
-                    _ => 0.0,
-                }
-            }
-
-            // TransactionReceipt
-            if _name
-                .to_string()
-                .to_lowercase()
-                .eq_ignore_ascii_case(&String::from("MpesaReceiptNumber"))
-            {
-                transaction_receipt = match _value {
-                    MixedTypeValue::StringValue(s) => s.to_string(),
-                    _ => String::from(""),
-                }
-            }
-
-            //transaction_date
-            if _name
-                .to_string()
-                .to_lowercase()
-                .eq_ignore_ascii_case(&String::from("TransactionDate"))
-            {
-                transaction_date = match _value {
-                    MixedTypeValue::FloatValue(f) => f.to_string(),
-                    _ => String::from(""),
-                }
-            }
-
-            // phone_number
-            if _name
-                .to_string()
-                .to_lowercase()
-                .eq_ignore_ascii_case(&String::from("PhoneNumber"))
-            {
-                phone_number = match _value {
-                    MixedTypeValue::FloatValue(f) => f.to_string(),
-                    _ => String::from(""),
-                }
-            }
-        }
-
         let c2b_payment_result_parameters_output_details =
-            C2BPaymentResultParametersOutputDetails {
-                Amount: transaction_amount,
-                MpesaReceiptNumber: transaction_receipt,
-                TransactionDate: transaction_date,
-                PhoneNumber: phone_number,
+            if !list_of_items.is_empty() && list_of_items.len() > 0 {
+                for _item in list_of_items.iter() {
+                    let _name = &_item.Name;
+                    let _value = &_item.Value;
+
+                    // Amount
+                    if _name
+                        .to_string()
+                        .to_lowercase()
+                        .eq_ignore_ascii_case(&String::from("Amount"))
+                    {
+                        transaction_amount = match _value {
+                            MixedTypeValue::StringValue(s) => 0.0,
+                            MixedTypeValue::IntegerValue(i) => *i as f32,
+                            MixedTypeValue::FloatValue(f) => *f,
+                            _ => 0.0,
+                        }
+                    }
+
+                    // TransactionReceipt
+                    if _name
+                        .to_string()
+                        .to_lowercase()
+                        .eq_ignore_ascii_case(&String::from("MpesaReceiptNumber"))
+                    {
+                        transaction_receipt = match _value {
+                            MixedTypeValue::StringValue(s) => s.to_string(),
+                            _ => String::from(""),
+                        }
+                    }
+
+                    //transaction_date
+                    if _name
+                        .to_string()
+                        .to_lowercase()
+                        .eq_ignore_ascii_case(&String::from("TransactionDate"))
+                    {
+                        transaction_date = match _value {
+                            MixedTypeValue::FloatValue(f) => f.to_string(),
+                            _ => String::from(""),
+                        }
+                    }
+
+                    // phone_number
+                    if _name
+                        .to_string()
+                        .to_lowercase()
+                        .eq_ignore_ascii_case(&String::from("PhoneNumber"))
+                    {
+                        phone_number = match _value {
+                            MixedTypeValue::FloatValue(f) => f.to_string(),
+                            _ => String::from(""),
+                        }
+                    }
+                }
+
+                let c2b_payment_result_parameters_output_details =
+                    C2BPaymentResultParametersOutputDetails {
+                        Amount: transaction_amount,
+                        MpesaReceiptNumber: transaction_receipt,
+                        TransactionDate: transaction_date,
+                        PhoneNumber: phone_number,
+                    };
+
+                Some(c2b_payment_result_parameters_output_details)
+            } else {
+                None
             };
 
         c2b_payment_result_parameters_output_details

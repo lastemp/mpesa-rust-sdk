@@ -11,8 +11,9 @@ use crate::{
         BusinessToCustomerErrorResponseData, BusinessToCustomerInputDetails,
         BusinessToCustomerResponseData, C2bData, ConfirmationResponseData,
         CustomerToBusinessPaymentErrorResponseData, CustomerToBusinessPaymentInputDetails,
-        CustomerToBusinessPaymentResponseData, CustomerToBusinessPaymentResultData, ItemDetails,
-        MixedTypeValue, RegisterUrlInputDetails, RegisterUrlResponseData, ValidationResponseData,
+        CustomerToBusinessPaymentResponseData, CustomerToBusinessPaymentResultData, Item,
+        ItemDetails, MixedTypeValue, RegisterUrlInputDetails, RegisterUrlResponseData,
+        ValidationResponseData,
     },
     persistence::{
         create_incoming_c2b_mpesa_confirmation_requests,
@@ -829,14 +830,14 @@ pub(crate) async fn get_c2bpayment_result(
     let checkout_request_id = &result_data.Body.stkCallback.CheckoutRequestID;
     let result_code = &result_data.Body.stkCallback.ResultCode;
     let result_desc = &result_data.Body.stkCallback.ResultDesc;
-    let callback_meta_data = &result_data.Body.stkCallback.CallbackMetadata;
+    //let callback_meta_data = &result_data.Body.stkCallback.CallbackMetadata;
     /*
     let item_details = ItemDetails {
         Name: String::from(""),
         Value: MixedTypeValue::StringValue(String::from("")),
     };
     */
-    /*
+
     let item_details_1 = ItemDetails {
         Name: String::from("Amount"),
         Value: MixedTypeValue::FloatValue(150.00),
@@ -845,12 +846,22 @@ pub(crate) async fn get_c2bpayment_result(
         Name: String::from("MpesaReceiptNumber"),
         Value: MixedTypeValue::StringValue(String::from("NLJ7RT61SV")),
     };
-    let mut my_item = Vec::new();
-    my_item.push(item_details_1);
-    my_item.push(item_details_2);
-    */
+
+    let mut item_details = Vec::new();
+    //item_details.push(item_details_1);
+    //item_details.push(item_details_2);
+
+    let my_item = Item { Item: item_details };
+
+    //let list_of_items = &callback_meta_data.Item;
+    let callback_meta_data = &result_data
+        .Body
+        .stkCallback
+        .CallbackMetadata
+        .as_ref()
+        .unwrap_or(&my_item);
     let list_of_items = &callback_meta_data.Item;
-    //let list_of_items = &callback_meta_data.Item.as_ref.unwrap_or(&my_item);
+
     println!("merchant_request_id: {:?}", &merchant_request_id);
     println!("checkout_request_id: {:?}", &checkout_request_id);
     println!("result_code: {:?}", &result_code);

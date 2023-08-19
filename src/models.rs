@@ -226,7 +226,8 @@ pub struct CustomerToBusinessPaymentResultDetails {
     pub CheckoutRequestID: String,
     pub ResultCode: u32,
     pub ResultDesc: String,
-    pub CallbackMetadata: Item,
+    //pub CallbackMetadata: Item,
+    pub CallbackMetadata: Option<Item>,
 }
 
 #[derive(Deserialize, Debug)]
