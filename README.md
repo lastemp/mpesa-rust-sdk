@@ -1,4 +1,4 @@
-# mpesa-rust-sdk
+# mpesa_rust_sdk
 
 This is an sdk that will be used by developers to seamlessly integrate with Safaricom M-Pesa Mobile Money Payment Gateway 
 (i.e exposed API endpoints for accessing M-Pesa services by Kenyan Telco called "Safaricom").
@@ -12,5 +12,5 @@ The sdk has below listed dependencies:
 
 ## Usage
 
-This is currently being updated...
+This readme is not yet completed...
 
