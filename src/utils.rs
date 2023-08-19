@@ -261,6 +261,16 @@ pub fn build_business_buy_goods_data(
     }
 }
 
+pub fn build_headers(access_token: String) -> HeaderMap {
+    let mut headers = HeaderMap::new();
+
+    headers.insert(CONTENT_TYPE, "application/json".parse().unwrap());
+    headers.insert(ACCEPT, "application/json".parse().unwrap());
+    headers.insert("Authorization", access_token.parse().unwrap());
+
+    headers
+}
+
 pub fn build_headers_generate_auth_token(api_key: String) -> HeaderMap {
     let mut headers = HeaderMap::new();
 

@@ -38,22 +38,13 @@ use crate::{
         build_business_to_customer_data, build_business_to_customer_error_response_data,
         build_business_to_customer_response_data, build_customer_to_business_data,
         build_customer_to_business_payment_error_response_data,
-        build_customer_to_business_payment_response_data, build_headers_generate_auth_token,
-        build_register_url_data, build_register_url_response_data,
+        build_customer_to_business_payment_response_data, build_headers,
+        build_headers_generate_auth_token, build_register_url_data,
+        build_register_url_response_data,
     },
 };
 
 const AUTHORISATION_BEARER: &str = "Bearer";
-
-fn build_headers(access_token: String) -> HeaderMap {
-    let mut headers = HeaderMap::new();
-
-    headers.insert(CONTENT_TYPE, "application/json".parse().unwrap());
-    headers.insert(ACCEPT, "application/json".parse().unwrap());
-    headers.insert("Authorization", access_token.parse().unwrap());
-
-    headers
-}
 
 async fn parse_auth_token_response_data(
     response: Response,
