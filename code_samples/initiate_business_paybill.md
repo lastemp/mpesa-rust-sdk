@@ -10,7 +10,7 @@ This code sample shows how to invoke function get_business_paybill of the sdk.
 use mpesa_rust_sdk::MpesaGateway;
 use mpesa_rust_sdk::models::::{BusinessPayBillInputDetails, BusinessPayBillResponseData, BusinessPayBillErrorResponseData};
 
-let consumer_key: String = get_settings_details(&data, String::from("consumerkeympesa"));
+let consumer_key: String = String::from("***");
 let consumer_secret: String = String::from("***");
 let auth_token_url: String = String::from("***");
 
