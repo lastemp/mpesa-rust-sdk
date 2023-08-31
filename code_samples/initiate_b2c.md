@@ -48,7 +48,7 @@ fn get_business_to_customer_details(
 
 ```rust
 use mpesa_rust_sdk::MpesaGateway;
-use mpesa_rust_sdk::models::::{BusinessToCustomerInputDetails, BusinessToCustomerResponseData, BusinessToCustomerErrorResponseData};
+use mpesa_rust_sdk::models::{BusinessToCustomerInputDetails, BusinessToCustomerResponseData, BusinessToCustomerErrorResponseData};
 
 const TRANSACTION_COMMAND_ID: &str = "BusinessPayment"; //SalaryPayment, BusinessPayment, PromotionPayment
 const TRANSACTION_REMARKS: &str = "Performance payment fees";

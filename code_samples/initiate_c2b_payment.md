@@ -8,7 +8,7 @@ This code sample shows how to invoke function get_c2b_payment of the sdk.
 
 ```rust
 use mpesa_rust_sdk::MpesaGateway;
-use mpesa_rust_sdk::models::::{CustomerToBusinessPaymentInputDetails, CustomerToBusinessPaymentResponseData, CustomerToBusinessPaymentErrorResponseData};
+use mpesa_rust_sdk::models::{CustomerToBusinessPaymentInputDetails, CustomerToBusinessPaymentResponseData, CustomerToBusinessPaymentErrorResponseData};
 
 let consumer_key: String = String::from("***");
 let consumer_secret: String = String::from("***");
