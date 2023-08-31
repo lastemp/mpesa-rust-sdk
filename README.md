@@ -6,11 +6,20 @@ Safaricom M-Pesa Mobile Money enables customers to transfer money and pay for ut
 The Kenyan Telco "Safaricom" has provided M-Pesa API endpoints for B2C, C2B and B2B (https://developer.safaricom.co.ke/Documentation). 
 
 The sdk has below listed dependencies:
-- [Actix Web](https://github.com/actix/actix-web) web framework for Rust
 - [Serde](https://github.com/serde-rs/serde) for serializing and deserializing Rust data structures
 - [Reqwest](https://github.com/seanmonstar/reqwest) Rust HTTP Client
+- [chrono](https://github.com/chronotope/chrono) provides all functionality needed to do correct operations on dates and times
+- [base64](https://github.com/marshallpierce/rust-base64/tree/master) Decode from Base64 format or encode into it
+
+## installation
+
+```
+cargo install --git https://github.com/lastemp/mpesa_rust_sdk
+```
 
 ## Usage
 
-This readme is not yet completed...
+Please find below code samples and full working examples:
 
+   - See [the code samples](./code_samples/) for more info.	
+   - See [the examples](./examples/) for full working examples.
