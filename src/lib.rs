@@ -1,7 +1,22 @@
 mod api_layer;
 pub mod models;
 mod utils;
-
+mod authorization {
+    pub mod generate_auth_token;
+}
+mod customer_to_business {
+    pub mod customer_to_business_payment;
+    pub mod register_url;
+}
+mod business_to_customer {
+    pub mod business_to_customer;
+}
+mod business_paybill {
+    pub mod business_paybill;
+}
+mod business_buy_goods {
+    pub mod business_buy_goods;
+}
 use base64::{
     alphabet,
     engine::{self, general_purpose},
@@ -807,50 +822,13 @@ impl MpesaGateway {
 
     async fn get_auth_token(&self) -> std::result::Result<String, String> {
         let api_key = self.get_api_key();
-        //println!("api_key: {:?}", &api_key);
+
         let api_url = &self.auth_token_url;
-        //println!("api_url: {:?}", &api_url);
 
-        /*
-        let xy = tokio::spawn(async move {
-            // Process each request concurrently.
-            let _access_token = generate_auth_token(api_key, api_url.to_string()).await;
-            let access_token: String = match _access_token {
-                Ok(a) => a,
-                Err(e) => String::from(""),
-            };
-            return access_token;
-        });
-
-        let access_token: String = match xy.await {
-            Ok(a) => a,
-            Err(e) => String::from(""),
-        };
-
-        access_token
-        */
-        let _result = generate_auth_token(api_key, api_url.to_string()).await;
+        let _result =
+            authorization::generate_auth_token::get_auth_token(api_key, api_url.to_string()).await;
 
         _result
-        /*
-        let access_token: String = match _result {
-            Ok(a) => {
-                if !a.is_empty() {
-                    let mut access_token = AUTHORISATION_BEARER.to_string();
-                    let k = " "; // Separator
-                    access_token.push_str(k);
-                    access_token.push_str(&a);
-
-                    access_token
-                } else {
-                    String::from("")
-                }
-            }
-            Err(e) => String::from(""),
-        };
-
-        access_token
-        */
     }
 
     fn parse_auth_token(&self, access_token_result: String) -> String {
@@ -890,38 +868,29 @@ impl MpesaGateway {
     pub async fn get_register_url(
         &self,
         register_url_details: RegisterUrlInputDetails,
-    ) -> std::result::Result<RegisterUrlResponseData, reqwest::Error> {
+    ) -> std::result::Result<RegisterUrlResponseData, String> {
         let _output = self.get_auth_token();
 
         let _result = _output.await;
 
-        let output_result = if let Ok(access_token_result) = _result {
-            let access_token: String = self.parse_auth_token(access_token_result);
+        match _result {
+            Ok(access_token_result) => {
+                // Handle success case
+                let access_token: String = self.parse_auth_token(access_token_result);
 
-            let _result = register_url(register_url_details, access_token).await;
+                let _result = customer_to_business::register_url::register_url(
+                    register_url_details,
+                    access_token,
+                )
+                .await;
 
-            _result
-        } else if let Err(e) = _result {
-            //println!("Data Error: {:?}", e);
-            let _x = Local::now().format("%Y%m%d%H%M%S%3f").to_string();
-            let _y = Local::now().format("%Y%m%d%H%M%S%3f").to_string();
-            let mut _z = String::from("generate oauth: ");
-            _z.push_str(&e);
-            let register_url_response_data =
-                build_register_url_response_data(Some(_x), Some(_y), Some(_z));
-            Ok(register_url_response_data)
-        } else {
-            //println!("Unexpected error occured during processing");
-            let _x = Local::now().format("%Y%m%d%H%M%S%3f").to_string();
-            let _y = Local::now().format("%Y%m%d%H%M%S%3f").to_string();
-            let mut _z = String::from("generate oauth: ");
-            _z.push_str(&String::from("Unexpected error occured during processing"));
-            let register_url_response_data =
-                build_register_url_response_data(Some(_x), Some(_y), Some(_z));
-            Ok(register_url_response_data)
-        };
-
-        output_result
+                return _result;
+            }
+            Err(_err) => {
+                // Handle error case
+                return Err(_err.to_string());
+            }
+        }
     }
 
     pub async fn get_b2c(
@@ -932,59 +901,30 @@ impl MpesaGateway {
             BusinessToCustomerResponseData,
             BusinessToCustomerErrorResponseData,
         ),
-        reqwest::Error,
+        String,
     > {
         let _output = self.get_auth_token();
 
         let _result = _output.await;
 
-        let output_result = if let Ok(access_token_result) = _result {
-            let access_token: String = self.parse_auth_token(access_token_result);
+        match _result {
+            Ok(access_token_result) => {
+                // Handle success case
+                let access_token: String = self.parse_auth_token(access_token_result);
 
-            let _result = business_to_customer(business_to_customer_details, access_token).await;
+                let _result = business_to_customer::business_to_customer::business_to_customer(
+                    business_to_customer_details,
+                    access_token,
+                )
+                .await;
 
-            _result
-        } else if let Err(e) = _result {
-            //println!("Data Error: {:?}", e);
-            let _x = Local::now().format("%Y%m%d%H%M%S%3f").to_string();
-            let _y = Local::now().format("%Y%m%d%H%M%S%3f").to_string();
-            let mut _z = String::from("generate oauth: ");
-            _z.push_str(&e);
-
-            let business_to_customer_response_data =
-                build_business_to_customer_response_data(None, None, None, None);
-
-            let business_to_customer_error_response_data =
-                build_business_to_customer_error_response_data(Some(_x), Some(_y), Some(_z));
-
-            let my_output = (
-                business_to_customer_response_data,
-                business_to_customer_error_response_data,
-            );
-
-            Ok(my_output)
-        } else {
-            //println!("Unexpected error occured during processing");
-            let _x = Local::now().format("%Y%m%d%H%M%S%3f").to_string();
-            let _y = Local::now().format("%Y%m%d%H%M%S%3f").to_string();
-            let mut _z = String::from("generate oauth: ");
-            _z.push_str(&String::from("Unexpected error occured during processing"));
-
-            let business_to_customer_response_data =
-                build_business_to_customer_response_data(None, None, None, None);
-
-            let business_to_customer_error_response_data =
-                build_business_to_customer_error_response_data(Some(_x), Some(_y), Some(_z));
-
-            let my_output = (
-                business_to_customer_response_data,
-                business_to_customer_error_response_data,
-            );
-
-            Ok(my_output)
-        };
-
-        output_result
+                return _result;
+            }
+            Err(_err) => {
+                // Handle error case
+                return Err(_err.to_string());
+            }
+        }
     }
 
     pub async fn get_c2b_payment(
@@ -995,95 +935,31 @@ impl MpesaGateway {
             CustomerToBusinessPaymentResponseData,
             CustomerToBusinessPaymentErrorResponseData,
         ),
-        reqwest::Error,
+        String,
     > {
-        /*
-        let _output = self.get_auth_token();
-        let access_token: String = _output.await;
-        //println!("access_token: {:?}", &access_token);
-        let customer_to_business_response_data =
-            build_customer_to_business_payment_response_data(None, None, None, None, None);
-
-        let customer_to_business_error_response_data =
-            build_customer_to_business_payment_error_response_data(None, None, None);
-
-        let my_output = (
-            customer_to_business_response_data,
-            customer_to_business_error_response_data,
-        );
-
-        if access_token.is_empty() || access_token.replace(" ", "").trim().len() == 0 {
-            println!("access_token is empty");
-
-            return Ok(my_output);
-        }
-
-        let _result =
-            customer_to_business_payment(customer_to_business_details, access_token).await;
-
-        _result
-        */
-
         let _output = self.get_auth_token();
 
         let _result = _output.await;
 
-        let output_result = if let Ok(access_token_result) = _result {
-            let access_token: String = self.parse_auth_token(access_token_result);
+        match _result {
+            Ok(access_token_result) => {
+                // Handle success case
+                let access_token: String = self.parse_auth_token(access_token_result);
 
-            let _result =
-                customer_to_business_payment(customer_to_business_details, access_token).await;
+                let _result =
+                customer_to_business::customer_to_business_payment::customer_to_business_payment(
+                    customer_to_business_details,
+                    access_token,
+                )
+                .await;
 
-            _result
-        } else if let Err(e) = _result {
-            //println!("Data Error: {:?}", e);
-            let _x = Local::now().format("%Y%m%d%H%M%S%3f").to_string();
-            let _y = Local::now().format("%Y%m%d%H%M%S%3f").to_string();
-            let mut _z = String::from("generate oauth: ");
-            _z.push_str(&e);
-
-            let customer_to_business_response_data =
-                build_customer_to_business_payment_response_data(None, None, None, None, None);
-
-            let customer_to_business_error_response_data =
-                build_customer_to_business_payment_error_response_data(
-                    Some(_x),
-                    Some(_y),
-                    Some(_z),
-                );
-
-            let my_output = (
-                customer_to_business_response_data,
-                customer_to_business_error_response_data,
-            );
-
-            Ok(my_output)
-        } else {
-            //println!("Unexpected error occured during processing");
-            let _x = Local::now().format("%Y%m%d%H%M%S%3f").to_string();
-            let _y = Local::now().format("%Y%m%d%H%M%S%3f").to_string();
-            let mut _z = String::from("generate oauth: ");
-            _z.push_str(&String::from("Unexpected error occured during processing"));
-
-            let customer_to_business_response_data =
-                build_customer_to_business_payment_response_data(None, None, None, None, None);
-
-            let customer_to_business_error_response_data =
-                build_customer_to_business_payment_error_response_data(
-                    Some(_x),
-                    Some(_y),
-                    Some(_z),
-                );
-
-            let my_output = (
-                customer_to_business_response_data,
-                customer_to_business_error_response_data,
-            );
-
-            Ok(my_output)
-        };
-
-        output_result
+                return _result;
+            }
+            Err(_err) => {
+                // Handle error case
+                return Err(_err.to_string());
+            }
+        }
     }
 
     pub async fn get_business_paybill(
@@ -1094,84 +970,30 @@ impl MpesaGateway {
             BusinessPayBillResponseData,
             BusinessPayBillErrorResponseData,
         ),
-        reqwest::Error,
+        String,
     > {
-        /*
-        let _output = self.get_auth_token();
-        let access_token: String = _output.await;
-        //println!("access_token: {:?}", &access_token);
-
-        let business_paybill_response_data =
-            build_business_paybill_response_data(None, None, None, None);
-
-        let business_paybill_error_response_data =
-            build_business_paybill_error_response_data(None, None, None);
-
-        let my_output = (
-            business_paybill_response_data,
-            business_paybill_error_response_data,
-        );
-
-        if access_token.is_empty() || access_token.replace(" ", "").trim().len() == 0 {
-            println!("access_token is empty");
-            return Ok(my_output);
-        }
-
-        let _result = business_paybill(business_paybill_details, access_token).await;
-
-        _result
-        */
         let _output = self.get_auth_token();
 
         let _result = _output.await;
 
-        let output_result = if let Ok(access_token_result) = _result {
-            let access_token: String = self.parse_auth_token(access_token_result);
+        match _result {
+            Ok(access_token_result) => {
+                // Handle success case
+                let access_token: String = self.parse_auth_token(access_token_result);
 
-            let _result = business_paybill(business_paybill_details, access_token).await;
+                let _result = business_paybill::business_paybill::business_paybill(
+                    business_paybill_details,
+                    access_token,
+                )
+                .await;
 
-            _result
-        } else if let Err(e) = _result {
-            //println!("Data Error: {:?}", e);
-            let _x = Local::now().format("%Y%m%d%H%M%S%3f").to_string();
-            let _y = Local::now().format("%Y%m%d%H%M%S%3f").to_string();
-            let mut _z = String::from("generate oauth: ");
-            _z.push_str(&e);
-
-            let business_paybill_response_data =
-                build_business_paybill_response_data(None, None, None, None);
-
-            let business_paybill_error_response_data =
-                build_business_paybill_error_response_data(Some(_x), Some(_y), Some(_z));
-
-            let my_output = (
-                business_paybill_response_data,
-                business_paybill_error_response_data,
-            );
-
-            Ok(my_output)
-        } else {
-            //println!("Unexpected error occured during processing");
-            let _x = Local::now().format("%Y%m%d%H%M%S%3f").to_string();
-            let _y = Local::now().format("%Y%m%d%H%M%S%3f").to_string();
-            let mut _z = String::from("generate oauth: ");
-            _z.push_str(&String::from("Unexpected error occured during processing"));
-
-            let business_paybill_response_data =
-                build_business_paybill_response_data(None, None, None, None);
-
-            let business_paybill_error_response_data =
-                build_business_paybill_error_response_data(Some(_x), Some(_y), Some(_z));
-
-            let my_output = (
-                business_paybill_response_data,
-                business_paybill_error_response_data,
-            );
-
-            Ok(my_output)
-        };
-
-        output_result
+                return _result;
+            }
+            Err(_err) => {
+                // Handle error case
+                return Err(_err.to_string());
+            }
+        }
     }
 
     pub async fn get_business_buy_goods(
@@ -1182,85 +1004,30 @@ impl MpesaGateway {
             BusinessBuyGoodsResponseData,
             BusinessBuyGoodsErrorResponseData,
         ),
-        reqwest::Error,
+        String,
     > {
-        /*
-        let _output = self.get_auth_token();
-        let access_token: String = _output.await;
-        //println!("access_token: {:?}", &access_token);
-        let business_buy_goods_response_data =
-            build_business_buy_goods_response_data(None, None, None, None);
-
-        let business_buy_goods_error_response_data =
-            build_business_buy_goods_error_response_data(None, None, None);
-
-        let my_output = (
-            business_buy_goods_response_data,
-            business_buy_goods_error_response_data,
-        );
-
-        if access_token.is_empty() || access_token.replace(" ", "").trim().len() == 0 {
-            println!("access_token is empty");
-
-            return Ok(my_output);
-        }
-
-        let _result = business_buy_goods(business_buy_goods_details, access_token).await;
-
-        _result
-        */
-
         let _output = self.get_auth_token();
 
         let _result = _output.await;
 
-        let output_result = if let Ok(access_token_result) = _result {
-            let access_token: String = self.parse_auth_token(access_token_result);
+        match _result {
+            Ok(access_token_result) => {
+                // Handle success case
+                let access_token: String = self.parse_auth_token(access_token_result);
 
-            let _result = business_buy_goods(business_buy_goods_details, access_token).await;
+                let _result = business_buy_goods::business_buy_goods::business_buy_goods(
+                    business_buy_goods_details,
+                    access_token,
+                )
+                .await;
 
-            _result
-        } else if let Err(e) = _result {
-            //println!("Data Error: {:?}", e);
-            let _x = Local::now().format("%Y%m%d%H%M%S%3f").to_string();
-            let _y = Local::now().format("%Y%m%d%H%M%S%3f").to_string();
-            let mut _z = String::from("generate oauth: ");
-            _z.push_str(&e);
-
-            let business_buy_goods_response_data =
-                build_business_buy_goods_response_data(None, None, None, None);
-
-            let business_buy_goods_error_response_data =
-                build_business_buy_goods_error_response_data(Some(_x), Some(_y), Some(_z));
-
-            let my_output = (
-                business_buy_goods_response_data,
-                business_buy_goods_error_response_data,
-            );
-
-            Ok(my_output)
-        } else {
-            //println!("Unexpected error occured during processing");
-            let _x = Local::now().format("%Y%m%d%H%M%S%3f").to_string();
-            let _y = Local::now().format("%Y%m%d%H%M%S%3f").to_string();
-            let mut _z = String::from("generate oauth: ");
-            _z.push_str(&String::from("Unexpected error occured during processing"));
-
-            let business_buy_goods_response_data =
-                build_business_buy_goods_response_data(None, None, None, None);
-
-            let business_buy_goods_error_response_data =
-                build_business_buy_goods_error_response_data(Some(_x), Some(_y), Some(_z));
-
-            let my_output = (
-                business_buy_goods_response_data,
-                business_buy_goods_error_response_data,
-            );
-
-            Ok(my_output)
-        };
-
-        output_result
+                return _result;
+            }
+            Err(_err) => {
+                // Handle error case
+                return Err(_err.to_string());
+            }
+        }
     }
 }
 
