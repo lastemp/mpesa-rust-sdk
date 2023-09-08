@@ -2,9 +2,9 @@
 
 This functionality initiates business buy goods request.
 
-## get_business_buy_goods
+## business_buy_goods
 
-This code sample shows how to invoke function get_business_buy_goods of the sdk.
+This code sample shows how to invoke function business_buy_goods of the sdk.
 
 ```rust
 use mpesa_rust_sdk::MpesaGateway;
@@ -50,60 +50,39 @@ let _result = BusinessBuyGoodsInputDetails::new(
 if let Ok(business_buy_goods_details) = _result {
 	let _result = MpesaGateway::new(consumer_key, consumer_secret, auth_token_url);
 	if let Ok(mpesa_gateway) = _result {
-		let _output = mpesa_gateway.get_business_buy_goods(business_buy_goods_details);
+		let _output = mpesa_gateway.business_buy_goods(business_buy_goods_details);
 
 		let _result: std::result::Result<
 			(
-				BusinessBuyGoodsResponseData,
-				BusinessBuyGoodsErrorResponseData,
+				Option<BusinessBuyGoodsResponseData>,
+				Option<BusinessBuyGoodsErrorResponseData>,
 			),
-			reqwest::Error,
+			String,
 		> = _output.await;
 
-		let (
-			business_buy_goods_response_data,
-			business_buy_goods_error_response_data,
-			error_data,
-		) = match _result {
-			Ok(x) => {
-				let (a, b) = x;
-				(a, b, None)
+		match _result {
+			Ok(business_buy_goods_data) => {
+				// Lets unpack the tuple
+				let (business_buy_goods_response_data, business_buy_goods_error_response_data) =
+					business_buy_goods_data;
+
+				// business_buy_goods_response_data
+				if let Some(response_data) = business_buy_goods_response_data {
+					println!("business_buy_goods_response_data: {:?}", &response_data);
+				}
+
+				// business_buy_goods_error_response_data
+				if let Some(response_data) = business_buy_goods_error_response_data {
+					println!(
+						"business_buy_goods_error_response_data: {:?}",
+						&response_data
+					);
+				}
 			}
 			Err(e) => {
-				let a = BusinessBuyGoodsResponseData {
-					OriginatorConversationID: None,
-					ConversationID: None,
-					ResponseCode: None,
-					ResponseDescription: None,
-				};
-
-				let b = BusinessBuyGoodsErrorResponseData {
-					requestId: None,
-					errorCode: None,
-					errorMessage: None,
-				};
-
-				(a, b, Some(e))
+				println!("Processing Error: {:?}", e)
 			}
-		};
-
-		println!(
-			"business_buy_goods_response_data: {:?}",
-			&business_buy_goods_response_data
-		);
-
-		println!(
-			"business_buy_goods_error_response_data: {:?}",
-			&business_buy_goods_error_response_data
-		);
-	} else if let Err(e) = _result {
-		println!("Data Error: {:?}", e)
-	} else {
-		println!("Unexpected error occured during processing")
+		}
 	};
-} else if let Err(e) = _result {
-	println!("Data Error: {:?}", e)
-} else {
-	println!("Unexpected error occured during processing")
 };
 ```

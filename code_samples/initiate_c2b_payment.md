@@ -2,9 +2,9 @@
 
 This functionality initiates c2b payment request.
 
-## get_c2b_payment
+## c2b_payment
 
-This code sample shows how to invoke function get_c2b_payment of the sdk.
+This code sample shows how to invoke function c2b_payment of the sdk.
 
 ```rust
 use mpesa_rust_sdk::MpesaGateway;
@@ -53,60 +53,41 @@ let _result = CustomerToBusinessPaymentInputDetails::new(
 if let Ok(customer_to_business_details) = _result {
 	let _result = MpesaGateway::new(consumer_key, consumer_secret, auth_token_url);
 	if let Ok(mpesa_gateway) = _result {
-		let _output = mpesa_gateway.get_c2b_payment(customer_to_business_details);
+		// Initiate the request through the sdk
+		let _output = mpesa_gateway.c2b_payment(customer_to_business_details);
 		let _result: std::result::Result<
 			(
-				CustomerToBusinessPaymentResponseData,
-				CustomerToBusinessPaymentErrorResponseData,
+				Option<CustomerToBusinessPaymentResponseData>,
+				Option<CustomerToBusinessPaymentErrorResponseData>,
 			),
-			reqwest::Error,
+			String,
 		> = _output.await;
 
-		let (
-			customer_to_business_response_data,
-			customer_to_business_error_response_data,
-			error_data,
-		) = match _result {
-			Ok(x) => {
-				let (a, b) = x;
-				(a, b, None)
+		match _result {
+			Ok(customer_to_business_data) => {
+				// Lets unpack the tuple
+				let (
+					customer_to_business_response_data,
+					customer_to_business_error_response_data,
+				) = customer_to_business_data;
+
+				// customer_to_business_response_data
+				if let Some(response_data) = customer_to_business_response_data {
+					println!("customer_to_business_response_data: {:?}", &response_data);
+				}
+
+				// customer_to_business_error_response_data
+				if let Some(response_data) = customer_to_business_error_response_data {
+					println!(
+						"customer_to_business_error_response_data: {:?}",
+						&response_data
+					);
+				}
 			}
 			Err(e) => {
-				let a = CustomerToBusinessPaymentResponseData {
-					MerchantRequestID: None,
-					CheckoutRequestID: None,
-					ResponseCode: None,
-					ResponseDescription: None,
-					CustomerMessage: None,
-				};
-
-				let b = CustomerToBusinessPaymentErrorResponseData {
-					requestId: None,
-					errorCode: None,
-					errorMessage: None,
-				};
-
-				(a, b, Some(e))
+				println!("Processing Error: {:?}", e)
 			}
-		};
-
-		println!(
-			"customer_to_business_response_data: {:?}",
-			&customer_to_business_response_data
-		);
-
-		println!(
-			"customer_to_business_error_response_data: {:?}",
-			&customer_to_business_error_response_data
-		);
-	} else if let Err(e) = _result {
-		println!("Data Error: {:?}", e)
-	} else {
-		println!("Unexpected error occured during processing")
+		}
 	};
-} else if let Err(e) = _result {
-	println!("Data Error: {:?}", e)
-} else {
-	println!("Unexpected error occured during processing")
-};	
+};
 ```

@@ -2,9 +2,9 @@
 
 This functionality initiates business paybill request.
 
-## get_business_paybill
+## business_paybill
 
-This code sample shows how to invoke function get_business_paybill of the sdk.
+This code sample shows how to invoke function business_paybill of the sdk.
 
 ```rust
 use mpesa_rust_sdk::MpesaGateway;
@@ -48,61 +48,39 @@ let _result = BusinessPayBillInputDetails::new(
 );
 	
 if let Ok(business_paybill_details) = _result {
-
 	let _result = MpesaGateway::new(consumer_key, consumer_secret, auth_token_url);
 
 	if let Ok(mpesa_gateway) = _result {
-		let _output = mpesa_gateway.get_business_paybill(business_paybill_details);
+		let _output = mpesa_gateway.business_paybill(business_paybill_details);
 
 		let _result: std::result::Result<
 			(
-				BusinessPayBillResponseData,
-				BusinessPayBillErrorResponseData,
+				Option<BusinessPayBillResponseData>,
+				Option<BusinessPayBillErrorResponseData>,
 			),
-			reqwest::Error,
+			String,
 		> = _output.await;
 
-		let (business_paybill_response_data, business_paybill_error_response_data, error_data) =
-			match _result {
-				Ok(x) => {
-					let (a, b) = x;
-					(a, b, None)
+		match _result {
+			Ok(business_paybill_data) => {
+				// Lets unpack the tuple
+				let (business_paybill_response_data, business_paybill_error_response_data) =
+					business_paybill_data;
+
+				// business_paybill_response_data
+				if let Some(response_data) = business_paybill_response_data {
+					println!("business_paybill_response_data: {:?}", &response_data);
 				}
-				Err(e) => {
-					let a = BusinessPayBillResponseData {
-						OriginatorConversationID: None,
-						ConversationID: None,
-						ResponseCode: None,
-						ResponseDescription: None,
-					};
 
-					let b = BusinessPayBillErrorResponseData {
-						requestId: None,
-						errorCode: None,
-						errorMessage: None,
-					};
-
-					(a, b, Some(e))
+				// business_paybill_error_response_data
+				if let Some(response_data) = business_paybill_error_response_data {
+					println!("business_paybill_error_response_data: {:?}", &response_data);
 				}
-			};
-
-		println!(
-			"business_paybill_response_data: {:?}",
-			&business_paybill_response_data
-		);
-
-		println!(
-			"business_paybill_error_response_data: {:?}",
-			&business_paybill_error_response_data
-		);
-	} else if let Err(e) = _result {
-		println!("Data Error: {:?}", e)
-	} else {
-		println!("Unexpected error occured during processing")
+			}
+			Err(e) => {
+				println!("Processing Error: {:?}", e)
+			}
+		}
 	};
-} else if let Err(e) = _result {
-	println!("Data Error: {:?}", e)
-} else {
-	println!("Unexpected error occured during processing")
 };
 ```

@@ -2,9 +2,9 @@
 
 This functionality initiates b2c request.
 
-## get_b2c
+## b2c
 
-This code sample shows how to invoke function get_b2c of the sdk.
+This code sample shows how to invoke function b2c of the sdk.
 
 ```rust
 fn get_business_to_customer_details(
@@ -75,60 +75,42 @@ let _result = get_business_to_customer_details(
 if let Ok(business_to_customer_data) = _result {
 	let _result = MpesaGateway::new(consumer_key, consumer_secret, auth_token_url);
 	if let Ok(mpesa_gateway) = _result {
-		let _output = mpesa_gateway.get_b2c(business_to_customer_data);
+		// Initiate the request through the sdk
+		let _output = mpesa_gateway.b2c(business_to_customer_data);
 
 		let _result: std::result::Result<
 			(
-				BusinessToCustomerResponseData,
-				BusinessToCustomerErrorResponseData,
+				Option<BusinessToCustomerResponseData>,
+				Option<BusinessToCustomerErrorResponseData>,
 			),
-			reqwest::Error,
+			String,
 		> = _output.await;
 
-		let (
-			business_to_customer_response_data,
-			business_to_customer_error_response_data,
-			error_data,
-		) = match _result {
-			Ok(x) => {
-				let (a, b) = x;
-				(a, b, None)
+		match _result {
+			Ok(business_to_customer_data) => {
+				// Lets unpack the tuple
+				let (
+					business_to_customer_response_data,
+					business_to_customer_error_response_data,
+				) = business_to_customer_data;
+
+				// business_to_customer_response_data
+				if let Some(response_data) = business_to_customer_response_data {
+					println!("business_to_customer_response_data: {:?}", &response_data);
+				}
+
+				// business_to_customer_error_response_data
+				if let Some(response_data) = business_to_customer_error_response_data {
+					println!(
+						"business_to_customer_error_response_data: {:?}",
+						&response_data
+					);
+				}
 			}
 			Err(e) => {
-				let a = BusinessToCustomerResponseData {
-					OriginatorConversationID: None,
-					ConversationID: None,
-					ResponseCode: None,
-					ResponseDescription: None,
-				};
-
-				let b = BusinessToCustomerErrorResponseData {
-					requestId: None,
-					errorCode: None,
-					errorMessage: None,
-				};
-
-				(a, b, Some(e))
+				println!("Processing Error: {:?}", e)
 			}
-		};
-
-		println!(
-			"business_to_customer_response_data: {:?}",
-			&business_to_customer_response_data
-		);
-
-		println!(
-			"business_to_customer_error_response_data: {:?}",
-			&business_to_customer_error_response_data
-		);
-	} else if let Err(e) = _result {
-		println!("Data Error: {:?}", e)
-	} else {
-		println!("Unexpected error occured during processing")
+		}
 	};
-} else if let Err(e) = _result {
-	println!("Data Error: {:?}", e)
-} else {
-	println!("Unexpected error occured during processing")
-};	
+};
 ```
