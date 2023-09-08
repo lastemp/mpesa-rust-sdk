@@ -1,8 +1,8 @@
 use reqwest::StatusCode;
 
 use crate::{
-    models::{RegisterUrlInputDetails, RegisterUrlResponseData},
-    utils::{build_headers, build_register_url_data},
+    models::models::{RegisterUrlInputDetails, RegisterUrlResponseData},
+    util::util::{build_headers, build_register_url_data},
 };
 
 pub async fn register_url(

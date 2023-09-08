@@ -1,23 +1,20 @@
 use reqwest::StatusCode;
 
 use crate::{
-    models::{
+    models::models::{
         BusinessBuyGoodsErrorResponseData, BusinessBuyGoodsInputDetails,
         BusinessBuyGoodsResponseData,
     },
-    utils::{
-        build_business_buy_goods_data, build_business_buy_goods_error_response_data,
-        build_business_buy_goods_response_data, build_headers,
-    },
+    util::util::{build_business_buy_goods_data, build_headers},
 };
 
-pub async fn business_buy_goods(
+pub async fn buy_goods(
     business_buy_goods_details: BusinessBuyGoodsInputDetails,
     access_token: String,
 ) -> std::result::Result<
     (
-        BusinessBuyGoodsResponseData,
-        BusinessBuyGoodsErrorResponseData,
+        Option<BusinessBuyGoodsResponseData>,
+        Option<BusinessBuyGoodsErrorResponseData>,
     ),
     String,
 > {
@@ -71,10 +68,9 @@ pub async fn business_buy_goods(
                 match response.json::<BusinessBuyGoodsResponseData>().await {
                     Ok(business_buy_goods_response_data) => {
                         // Handle success case
-                        let business_buy_goods_error_response_data =
-                            build_business_buy_goods_error_response_data(None, None, None);
+                        let business_buy_goods_error_response_data = None;
                         let my_output = (
-                            business_buy_goods_response_data,
+                            Some(business_buy_goods_response_data),
                             business_buy_goods_error_response_data,
                         );
                         return Ok(my_output);
@@ -89,11 +85,10 @@ pub async fn business_buy_goods(
                 match response.json::<BusinessBuyGoodsErrorResponseData>().await {
                     Ok(business_buy_goods_error_response_data) => {
                         // Handle success case
-                        let business_buy_goods_response_data =
-                            build_business_buy_goods_response_data(None, None, None, None);
+                        let business_buy_goods_response_data = None;
                         let my_output = (
                             business_buy_goods_response_data,
-                            business_buy_goods_error_response_data,
+                            Some(business_buy_goods_error_response_data),
                         );
                         return Ok(my_output);
                     }

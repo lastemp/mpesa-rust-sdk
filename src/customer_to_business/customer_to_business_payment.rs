@@ -1,24 +1,21 @@
 use reqwest::StatusCode;
 
 use crate::{
-    models::{
+    models::models::{
         CustomerToBusinessPaymentErrorResponseData, CustomerToBusinessPaymentInputDetails,
         CustomerToBusinessPaymentResponseData,
     },
-    utils::{
-        build_customer_to_business_data, build_customer_to_business_payment_error_response_data,
-        build_customer_to_business_payment_response_data, build_headers,
-    },
+    util::util::{build_customer_to_business_data, build_headers},
 };
 
 // network initiated push
-pub async fn customer_to_business_payment(
+pub async fn c2b_payment(
     customer_to_business_payment_details: CustomerToBusinessPaymentInputDetails,
     access_token: String,
 ) -> std::result::Result<
     (
-        CustomerToBusinessPaymentResponseData,
-        CustomerToBusinessPaymentErrorResponseData,
+        Option<CustomerToBusinessPaymentResponseData>,
+        Option<CustomerToBusinessPaymentErrorResponseData>,
     ),
     String,
 > {
@@ -71,12 +68,9 @@ pub async fn customer_to_business_payment(
                 {
                     Ok(customer_to_business_response_data) => {
                         // Handle success case
-                        let customer_to_business_error_response_data =
-                            build_customer_to_business_payment_error_response_data(
-                                None, None, None,
-                            );
+                        let customer_to_business_error_response_data = None;
                         let my_output = (
-                            customer_to_business_response_data,
+                            Some(customer_to_business_response_data),
                             customer_to_business_error_response_data,
                         );
 
@@ -95,13 +89,10 @@ pub async fn customer_to_business_payment(
                 {
                     Ok(customer_to_business_error_response_data) => {
                         // Handle success case
-                        let customer_to_business_response_data =
-                            build_customer_to_business_payment_response_data(
-                                None, None, None, None, None,
-                            );
+                        let customer_to_business_response_data = None;
                         let my_output = (
                             customer_to_business_response_data,
-                            customer_to_business_error_response_data,
+                            Some(customer_to_business_error_response_data),
                         );
 
                         return Ok(my_output);

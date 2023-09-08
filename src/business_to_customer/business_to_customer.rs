@@ -1,23 +1,20 @@
 use reqwest::StatusCode;
 
 use crate::{
-    models::{
+    models::models::{
         BusinessToCustomerErrorResponseData, BusinessToCustomerInputDetails,
         BusinessToCustomerResponseData,
     },
-    utils::{
-        build_business_to_customer_data, build_business_to_customer_error_response_data,
-        build_business_to_customer_response_data, build_headers,
-    },
+    util::util::{build_business_to_customer_data, build_headers},
 };
 
-pub async fn business_to_customer(
+pub async fn b2c(
     business_to_customer_details: BusinessToCustomerInputDetails,
     access_token: String,
 ) -> std::result::Result<
     (
-        BusinessToCustomerResponseData,
-        BusinessToCustomerErrorResponseData,
+        Option<BusinessToCustomerResponseData>,
+        Option<BusinessToCustomerErrorResponseData>,
     ),
     String,
 > {
@@ -66,11 +63,10 @@ pub async fn business_to_customer(
                 match response.json::<BusinessToCustomerResponseData>().await {
                     Ok(business_to_customer_response_data) => {
                         // Handle success case
-                        let business_to_customer_error_response_data =
-                            build_business_to_customer_error_response_data(None, None, None);
+                        let business_to_customer_error_response_data = None;
 
                         let my_output = (
-                            business_to_customer_response_data,
+                            Some(business_to_customer_response_data),
                             business_to_customer_error_response_data,
                         );
 
@@ -86,12 +82,11 @@ pub async fn business_to_customer(
                 match response.json::<BusinessToCustomerErrorResponseData>().await {
                     Ok(business_to_customer_error_response_data) => {
                         // Handle success case
-                        let business_to_customer_response_data =
-                            build_business_to_customer_response_data(None, None, None, None);
+                        let business_to_customer_response_data = None;
 
                         let my_output = (
                             business_to_customer_response_data,
-                            business_to_customer_error_response_data,
+                            Some(business_to_customer_error_response_data),
                         );
                         return Ok(my_output);
                     }

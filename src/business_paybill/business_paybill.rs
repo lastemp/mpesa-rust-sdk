@@ -1,22 +1,19 @@
 use reqwest::StatusCode;
 
 use crate::{
-    models::{
+    models::models::{
         BusinessPayBillErrorResponseData, BusinessPayBillInputDetails, BusinessPayBillResponseData,
     },
-    utils::{
-        build_business_paybill_data, build_business_paybill_error_response_data,
-        build_business_paybill_response_data, build_headers,
-    },
+    util::util::{build_business_paybill_data, build_headers},
 };
 
-pub async fn business_paybill(
+pub async fn pay_bill(
     business_paybill_details: BusinessPayBillInputDetails,
     access_token: String,
 ) -> std::result::Result<
     (
-        BusinessPayBillResponseData,
-        BusinessPayBillErrorResponseData,
+        Option<BusinessPayBillResponseData>,
+        Option<BusinessPayBillErrorResponseData>,
     ),
     String,
 > {
@@ -69,10 +66,9 @@ pub async fn business_paybill(
                 match response.json::<BusinessPayBillResponseData>().await {
                     Ok(business_paybill_response_data) => {
                         // Handle success case
-                        let business_paybill_error_response_data =
-                            build_business_paybill_error_response_data(None, None, None);
+                        let business_paybill_error_response_data = None;
                         let my_output = (
-                            business_paybill_response_data,
+                            Some(business_paybill_response_data),
                             business_paybill_error_response_data,
                         );
 
@@ -88,11 +84,10 @@ pub async fn business_paybill(
                 match response.json::<BusinessPayBillErrorResponseData>().await {
                     Ok(business_paybill_error_response_data) => {
                         // Handle success case
-                        let business_paybill_response_data =
-                            build_business_paybill_response_data(None, None, None, None);
+                        let business_paybill_response_data = None;
                         let my_output = (
                             business_paybill_response_data,
-                            business_paybill_error_response_data,
+                            Some(business_paybill_error_response_data),
                         );
 
                         return Ok(my_output);

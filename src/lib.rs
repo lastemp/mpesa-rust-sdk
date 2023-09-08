@@ -1,6 +1,9 @@
-mod api_layer;
-pub mod models;
-mod utils;
+pub mod models {
+    pub mod models;
+}
+mod util {
+    pub mod util;
+}
 mod authorization {
     pub mod generate_auth_token;
 }
@@ -22,41 +25,21 @@ use base64::{
     engine::{self, general_purpose},
     Engine as _,
 };
-
-use api_layer::{
-    business_buy_goods, business_paybill, business_to_customer, customer_to_business_payment,
-    generate_auth_token, register_url,
-};
-use chrono::prelude::*;
-use reqwest::header::HeaderMap;
-use reqwest::header::{ACCEPT, CONTENT_TYPE};
-use reqwest::Response;
-use reqwest::StatusCode;
-use serde::{Deserialize, Serialize};
-use utils::{
-    build_business_buy_goods_error_response_data, build_business_buy_goods_response_data,
-    build_business_paybill_error_response_data, build_business_paybill_response_data,
-    build_business_to_customer_error_response_data, build_business_to_customer_response_data,
-    build_customer_to_business_payment_error_response_data,
-    build_customer_to_business_payment_response_data, build_register_url_response_data,
-};
-
-use models::{
-    AuthTokenResponseData, B2CResultParametersOutputDetails, BusinessBuyGoodsData,
-    BusinessBuyGoodsErrorResponseData, BusinessBuyGoodsFailedResultParameter,
-    BusinessBuyGoodsInputDetails, BusinessBuyGoodsReferenceItem,
-    BusinessBuyGoodsReferenceItemOutputDetails, BusinessBuyGoodsResponseData,
-    BusinessBuyGoodsResultParametersOutputDetails, BusinessBuyGoodsTimeoutParametersOutputDetails,
-    BusinessPayBillData, BusinessPayBillErrorResponseData, BusinessPayBillFailedResultParameter,
-    BusinessPayBillInputDetails, BusinessPayBillReferenceItem,
-    BusinessPayBillReferenceItemOutputDetails, BusinessPayBillResponseData,
-    BusinessPayBillResultParametersOutputDetails, BusinessPayBillTimeoutParametersOutputDetails,
-    BusinessToCustomerData, BusinessToCustomerErrorResponseData, BusinessToCustomerInputDetails,
-    BusinessToCustomerResponseData, C2BPaymentResultParametersOutputDetails,
-    CustomerToBusinessPaymentData, CustomerToBusinessPaymentErrorResponseData,
+use models::models::{
+    B2CResultParametersOutputDetails, BusinessBuyGoodsErrorResponseData,
+    BusinessBuyGoodsFailedResultParameter, BusinessBuyGoodsInputDetails,
+    BusinessBuyGoodsReferenceItem, BusinessBuyGoodsReferenceItemOutputDetails,
+    BusinessBuyGoodsResponseData, BusinessBuyGoodsResultParametersOutputDetails,
+    BusinessBuyGoodsTimeoutParametersOutputDetails, BusinessPayBillErrorResponseData,
+    BusinessPayBillFailedResultParameter, BusinessPayBillInputDetails,
+    BusinessPayBillReferenceItem, BusinessPayBillReferenceItemOutputDetails,
+    BusinessPayBillResponseData, BusinessPayBillResultParametersOutputDetails,
+    BusinessPayBillTimeoutParametersOutputDetails, BusinessToCustomerErrorResponseData,
+    BusinessToCustomerInputDetails, BusinessToCustomerResponseData,
+    C2BPaymentResultParametersOutputDetails, CustomerToBusinessPaymentErrorResponseData,
     CustomerToBusinessPaymentInputDetails, CustomerToBusinessPaymentResponseData, ItemDetails,
-    MixedTypeValue, ReferenceItemDetails, RegisterUrlData, RegisterUrlInputDetails,
-    RegisterUrlResponseData, ResultParameter, ResultParameterDetails,
+    MixedTypeValue, ReferenceItemDetails, RegisterUrlInputDetails, RegisterUrlResponseData,
+    ResultParameter,
 };
 
 const AUTHORISATION_BEARER: &str = "Bearer";
@@ -832,23 +815,6 @@ impl MpesaGateway {
     }
 
     fn parse_auth_token(&self, access_token_result: String) -> String {
-        /*
-        let access_token: String = match access_token_result {
-            Ok(a) => {
-                if !a.is_empty() {
-                    let mut access_token = AUTHORISATION_BEARER.to_string();
-                    let k = " "; // Separator
-                    access_token.push_str(k);
-                    access_token.push_str(&a);
-
-                    access_token
-                } else {
-                    String::from("")
-                }
-            }
-            Err(e) => String::from(""),
-        };
-        */
         let access_token: String = if !access_token_result.is_empty()
             && access_token_result.replace(" ", "").trim().len() > 0
         {
@@ -865,7 +831,7 @@ impl MpesaGateway {
         access_token
     }
 
-    pub async fn get_register_url(
+    pub async fn register_url(
         &self,
         register_url_details: RegisterUrlInputDetails,
     ) -> std::result::Result<RegisterUrlResponseData, String> {
@@ -893,13 +859,13 @@ impl MpesaGateway {
         }
     }
 
-    pub async fn get_b2c(
+    pub async fn b2c(
         &self,
         business_to_customer_details: BusinessToCustomerInputDetails,
     ) -> std::result::Result<
         (
-            BusinessToCustomerResponseData,
-            BusinessToCustomerErrorResponseData,
+            Option<BusinessToCustomerResponseData>,
+            Option<BusinessToCustomerErrorResponseData>,
         ),
         String,
     > {
@@ -912,7 +878,7 @@ impl MpesaGateway {
                 // Handle success case
                 let access_token: String = self.parse_auth_token(access_token_result);
 
-                let _result = business_to_customer::business_to_customer::business_to_customer(
+                let _result = business_to_customer::business_to_customer::b2c(
                     business_to_customer_details,
                     access_token,
                 )
@@ -927,13 +893,13 @@ impl MpesaGateway {
         }
     }
 
-    pub async fn get_c2b_payment(
+    pub async fn c2b_payment(
         &self,
         customer_to_business_details: CustomerToBusinessPaymentInputDetails,
     ) -> std::result::Result<
         (
-            CustomerToBusinessPaymentResponseData,
-            CustomerToBusinessPaymentErrorResponseData,
+            Option<CustomerToBusinessPaymentResponseData>,
+            Option<CustomerToBusinessPaymentErrorResponseData>,
         ),
         String,
     > {
@@ -946,8 +912,7 @@ impl MpesaGateway {
                 // Handle success case
                 let access_token: String = self.parse_auth_token(access_token_result);
 
-                let _result =
-                customer_to_business::customer_to_business_payment::customer_to_business_payment(
+                let _result = customer_to_business::customer_to_business_payment::c2b_payment(
                     customer_to_business_details,
                     access_token,
                 )
@@ -962,13 +927,13 @@ impl MpesaGateway {
         }
     }
 
-    pub async fn get_business_paybill(
+    pub async fn business_paybill(
         &self,
         business_paybill_details: BusinessPayBillInputDetails,
     ) -> std::result::Result<
         (
-            BusinessPayBillResponseData,
-            BusinessPayBillErrorResponseData,
+            Option<BusinessPayBillResponseData>,
+            Option<BusinessPayBillErrorResponseData>,
         ),
         String,
     > {
@@ -981,7 +946,7 @@ impl MpesaGateway {
                 // Handle success case
                 let access_token: String = self.parse_auth_token(access_token_result);
 
-                let _result = business_paybill::business_paybill::business_paybill(
+                let _result = business_paybill::business_paybill::pay_bill(
                     business_paybill_details,
                     access_token,
                 )
@@ -996,13 +961,13 @@ impl MpesaGateway {
         }
     }
 
-    pub async fn get_business_buy_goods(
+    pub async fn business_buy_goods(
         &self,
         business_buy_goods_details: BusinessBuyGoodsInputDetails,
     ) -> std::result::Result<
         (
-            BusinessBuyGoodsResponseData,
-            BusinessBuyGoodsErrorResponseData,
+            Option<BusinessBuyGoodsResponseData>,
+            Option<BusinessBuyGoodsErrorResponseData>,
         ),
         String,
     > {
@@ -1015,7 +980,7 @@ impl MpesaGateway {
                 // Handle success case
                 let access_token: String = self.parse_auth_token(access_token_result);
 
-                let _result = business_buy_goods::business_buy_goods::business_buy_goods(
+                let _result = business_buy_goods::business_buy_goods::buy_goods(
                     business_buy_goods_details,
                     access_token,
                 )

@@ -1,7 +1,6 @@
 extern crate base64;
 extern crate mpesa_rust_sdk;
 
-//use crate::api_layer::{generate_auth_token, register_url};
 use crate::persistence::{
     create_incoming_c2b_mpesa_confirmation_requests, create_incoming_c2b_mpesa_validation_requests,
     get_mpesa_access_token, get_settings_details,
@@ -13,7 +12,7 @@ use base64::{
     Engine as _,
 };
 use chrono::prelude::*;
-use mpesa_rust_sdk::models::{
+use mpesa_rust_sdk::models::models::{
     B2CFailedData, B2CResultData, BusinessBuyGoodsErrorResponseData, BusinessBuyGoodsFailedData,
     BusinessBuyGoodsInputDetails, BusinessBuyGoodsResponseData, BusinessBuyGoodsResultData,
     BusinessPayBillErrorResponseData, BusinessPayBillFailedData, BusinessPayBillInputDetails,
@@ -26,7 +25,6 @@ use mpesa_rust_sdk::models::{
 };
 use mpesa_rust_sdk::MpesaGateway;
 use mysql::*;
-//use reqwest::Error;
 use serde::{Deserialize, Serialize};
 use std::str;
 
@@ -39,40 +37,7 @@ const TRANSACTION_OCCASSION: &str = "Performance payment fees";
 pub(crate) async fn index() -> impl Responder {
     format!("")
 }
-/*
-#[get("/generateauth")]
-pub(crate) async fn generate_auth(data: web::Data<Pool>) -> impl Responder {
-    //let api_key = get_api_key(&data);
-    let consumer_key = get_settings_details(&data, String::from("consumerkeympesa"));
-    let consumer_secret = get_settings_details(&data, String::from("consumersecretmpesa"));
-    let auth_token_url = get_settings_details(&data, String::from("authtokenurlmpesa"));
-    let register_url: String = String::from("");
-    let b2c_payment_request_url: String = String::from("");
-    let stk_push_url: String = String::from("");
-    let b2b_payment_request_url: String = String::from("");
-    let mpesa_gateway = MpesaGateway::new(
-        consumer_key,
-        consumer_secret,
-        auth_token_url,
-        register_url,
-        b2c_payment_request_url,
-        stk_push_url,
-        b2b_payment_request_url,
-    );
-    /*
-    tokio::spawn(async move {
-        // Process each request concurrently.
-        generate_auth_token(data, api_key, api_url).await;
-    });
-    */
-    /*
-    let xy = mpesa_gateway.get_auth_token();
-    let access_token: String = xy.await;
-    println!("access_token: {:?}", &access_token);
-    */
-    format!("")
-}
-*/
+
 #[get("/registerclienturls")]
 pub(crate) async fn register_client_urls(data: web::Data<Pool>) -> impl Responder {
     let _result = get_register_url_details(&data);
@@ -85,38 +50,20 @@ pub(crate) async fn register_client_urls(data: web::Data<Pool>) -> impl Responde
 
         let _result = MpesaGateway::new(consumer_key, consumer_secret, auth_token_url);
         if let Ok(mpesa_gateway) = _result {
-            let _output = mpesa_gateway.get_register_url(register_url_details);
+            // Initiate the request through the sdk
+            let _output = mpesa_gateway.register_url(register_url_details);
 
-            let _result: std::result::Result<RegisterUrlResponseData, reqwest::Error> =
-                _output.await;
+            let _result: std::result::Result<RegisterUrlResponseData, String> = _output.await;
 
-            let (register_url_response_data, error_data) = match _result {
-                Ok(a) => (a, None),
-                Err(e) => {
-                    //println!("server not responding: {:?}", e.to_string());
-                    let a = RegisterUrlResponseData {
-                        OriginatorCoversationID: None,
-                        ConversationID: None,
-                        ResponseDescription: None,
-                    };
-
-                    (a, Some(e))
-                }
-            };
-
-            println!(
-                "register_url_response_data: {:?}",
-                &register_url_response_data
-            );
-        } else if let Err(e) = _result {
-            println!("Data Error: {:?}", e)
-        } else {
-            println!("Unexpected error occured during processing")
+            if let Ok(register_url_response_data) = _result {
+                println!(
+                    "register_url_response_data: {:?}",
+                    &register_url_response_data
+                );
+            } else if let Err(e) = _result {
+                println!("Processing Error: {:?}", e)
+            }
         };
-    } else if let Err(e) = _result {
-        println!("Data Error: {:?}", e)
-    } else {
-        println!("Unexpected error occured during processing")
     };
 
     format!("")
@@ -132,7 +79,7 @@ pub(crate) async fn process_b2c(data: web::Data<Pool>) -> impl Responder {
     let amount_paid: u32 = 1500;
     let command_id = TRANSACTION_COMMAND_ID.to_string();
     let _remarks = TRANSACTION_REMARKS.to_string();
-    let _occassion = String::from(""); //TRANSACTION_OCCASSION.to_string();
+    let _occassion = TRANSACTION_OCCASSION.to_string();
 
     let _result = get_business_to_customer_details(
         &data,
@@ -143,72 +90,46 @@ pub(crate) async fn process_b2c(data: web::Data<Pool>) -> impl Responder {
         _occassion.to_string(),
     );
 
-    /*
-    println!(
-        "business_to_customer_data: {:?}",
-        &business_to_customer_data
-    );
-    */
-
     if let Ok(business_to_customer_data) = _result {
         let _result = MpesaGateway::new(consumer_key, consumer_secret, auth_token_url);
         if let Ok(mpesa_gateway) = _result {
-            let _output = mpesa_gateway.get_b2c(business_to_customer_data);
+            // Initiate the request through the sdk
+            let _output = mpesa_gateway.b2c(business_to_customer_data);
 
             let _result: std::result::Result<
                 (
-                    BusinessToCustomerResponseData,
-                    BusinessToCustomerErrorResponseData,
+                    Option<BusinessToCustomerResponseData>,
+                    Option<BusinessToCustomerErrorResponseData>,
                 ),
-                reqwest::Error,
+                String,
             > = _output.await;
 
-            let (
-                business_to_customer_response_data,
-                business_to_customer_error_response_data,
-                error_data,
-            ) = match _result {
-                Ok(x) => {
-                    let (a, b) = x;
-                    (a, b, None)
+            match _result {
+                Ok(business_to_customer_data) => {
+                    // Lets unpack the tuple
+                    let (
+                        business_to_customer_response_data,
+                        business_to_customer_error_response_data,
+                    ) = business_to_customer_data;
+
+                    // business_to_customer_response_data
+                    if let Some(response_data) = business_to_customer_response_data {
+                        println!("business_to_customer_response_data: {:?}", &response_data);
+                    }
+
+                    // business_to_customer_error_response_data
+                    if let Some(response_data) = business_to_customer_error_response_data {
+                        println!(
+                            "business_to_customer_error_response_data: {:?}",
+                            &response_data
+                        );
+                    }
                 }
                 Err(e) => {
-                    //println!("server not responding: {:?}", e.to_string());
-                    let a = BusinessToCustomerResponseData {
-                        OriginatorConversationID: None,
-                        ConversationID: None,
-                        ResponseCode: None,
-                        ResponseDescription: None,
-                    };
-
-                    let b = BusinessToCustomerErrorResponseData {
-                        requestId: None,
-                        errorCode: None,
-                        errorMessage: None,
-                    };
-
-                    (a, b, Some(e))
+                    println!("Processing Error: {:?}", e)
                 }
-            };
-
-            println!(
-                "business_to_customer_response_data: {:?}",
-                &business_to_customer_response_data
-            );
-
-            println!(
-                "business_to_customer_error_response_data: {:?}",
-                &business_to_customer_error_response_data
-            );
-        } else if let Err(e) = _result {
-            println!("Data Error: {:?}", e)
-        } else {
-            println!("Unexpected error occured during processing")
+            }
         };
-    } else if let Err(e) = _result {
-        println!("Data Error: {:?}", e)
-    } else {
-        println!("Unexpected error occured during processing")
     };
 
     format!("")
@@ -221,14 +142,14 @@ pub(crate) async fn process_c2b_payment(data: web::Data<Pool>) -> impl Responder
     let auth_token_url: String = get_settings_details(&data, String::from("authtokenurlmpesa"));
     let stk_push_url: String =
         String::from("https://sandbox.safaricom.co.ke/mpesa/stkpush/v1/processrequest");
-    let business_short_code: String = String::from("174***");
+    let business_short_code: String = String::from("17***");
     let pass_key: String =
         String::from("***");
     let time_stamp: String = Local::now().format("%Y%m%d%H%M%S").to_string(); //"YYYYMMDDHHmmss";
     let transaction_type: String = String::from("CustomerPayBillOnline");
     let _amount: u32 = 1;
     let party_a: u64 = 2547***;
-    let party_b: u32 = 174***;
+    let party_b: u32 = 17***;
     let phone_number: u64 = 2547***;
     let call_back_url: String = String::from("https://mydomain.com/path");
     let account_reference: String = String::from("Company X");
@@ -256,72 +177,45 @@ pub(crate) async fn process_c2b_payment(data: web::Data<Pool>) -> impl Responder
         transaction_desc,
     );
 
-    /*
-    println!(
-        "customer_to_business_details: {:?}",
-        &customer_to_business_details
-    );
-    */
-
     if let Ok(customer_to_business_details) = _result {
         let _result = MpesaGateway::new(consumer_key, consumer_secret, auth_token_url);
         if let Ok(mpesa_gateway) = _result {
-            let _output = mpesa_gateway.get_c2b_payment(customer_to_business_details);
+            // Initiate the request through the sdk
+            let _output = mpesa_gateway.c2b_payment(customer_to_business_details);
             let _result: std::result::Result<
                 (
-                    CustomerToBusinessPaymentResponseData,
-                    CustomerToBusinessPaymentErrorResponseData,
+                    Option<CustomerToBusinessPaymentResponseData>,
+                    Option<CustomerToBusinessPaymentErrorResponseData>,
                 ),
-                reqwest::Error,
+                String,
             > = _output.await;
 
-            let (
-                customer_to_business_response_data,
-                customer_to_business_error_response_data,
-                error_data,
-            ) = match _result {
-                Ok(x) => {
-                    let (a, b) = x;
-                    (a, b, None)
+            match _result {
+                Ok(customer_to_business_data) => {
+                    // Lets unpack the tuple
+                    let (
+                        customer_to_business_response_data,
+                        customer_to_business_error_response_data,
+                    ) = customer_to_business_data;
+
+                    // customer_to_business_response_data
+                    if let Some(response_data) = customer_to_business_response_data {
+                        println!("customer_to_business_response_data: {:?}", &response_data);
+                    }
+
+                    // customer_to_business_error_response_data
+                    if let Some(response_data) = customer_to_business_error_response_data {
+                        println!(
+                            "customer_to_business_error_response_data: {:?}",
+                            &response_data
+                        );
+                    }
                 }
                 Err(e) => {
-                    //println!("server not responding: {:?}", e.to_string());
-                    let a = CustomerToBusinessPaymentResponseData {
-                        MerchantRequestID: None,
-                        CheckoutRequestID: None,
-                        ResponseCode: None,
-                        ResponseDescription: None,
-                        CustomerMessage: None,
-                    };
-
-                    let b = CustomerToBusinessPaymentErrorResponseData {
-                        requestId: None,
-                        errorCode: None,
-                        errorMessage: None,
-                    };
-
-                    (a, b, Some(e))
+                    println!("Processing Error: {:?}", e)
                 }
-            };
-
-            println!(
-                "customer_to_business_response_data: {:?}",
-                &customer_to_business_response_data
-            );
-
-            println!(
-                "customer_to_business_error_response_data: {:?}",
-                &customer_to_business_error_response_data
-            );
-        } else if let Err(e) = _result {
-            println!("Data Error: {:?}", e)
-        } else {
-            println!("Unexpected error occured during processing")
+            }
         };
-    } else if let Err(e) = _result {
-        println!("Data Error: {:?}", e)
-    } else {
-        println!("Unexpected error occured during processing")
     };
 
     format!("")
@@ -335,15 +229,15 @@ pub(crate) async fn process_business_paybill(data: web::Data<Pool>) -> impl Resp
 
     let b2b_payment_request_url: String =
         String::from("https://sandbox.safaricom.co.ke/mpesa/b2b/v1/paymentrequest");
-    let _initiator: String = String::from("test***");
+    let _initiator: String = String::from("***");
     let security_credential: String = String::from("***");
     let command_id: String = String::from("BusinessPayBill");
     let sender_identifier_type: String = String::from("4");
     let reciever_identifier_type: String = String::from("4");
     let _amount: u32 = 145;
-    let party_a: String = String::from("600***");
-    let party_b: String = String::from("000***");
-    let account_reference: String = String::from("353***");
+    let party_a: String = String::from("6***");
+    let party_b: String = String::from("0***");
+    let account_reference: String = String::from("3***");
     let _requester: String = String::from("2547***");
     let _remarks: String = String::from("ok");
     let queue_time_out_url: String = String::from("https://mydomain.com/b2b/queue/");
@@ -367,69 +261,40 @@ pub(crate) async fn process_business_paybill(data: web::Data<Pool>) -> impl Resp
     );
 
     if let Ok(business_paybill_details) = _result {
-        /*
-        println!(
-            "customer_to_business_details: {:?}",
-            &customer_to_business_details
-        );
-        */
-
         let _result = MpesaGateway::new(consumer_key, consumer_secret, auth_token_url);
 
         if let Ok(mpesa_gateway) = _result {
-            let _output = mpesa_gateway.get_business_paybill(business_paybill_details);
+            let _output = mpesa_gateway.business_paybill(business_paybill_details);
 
             let _result: std::result::Result<
                 (
-                    BusinessPayBillResponseData,
-                    BusinessPayBillErrorResponseData,
+                    Option<BusinessPayBillResponseData>,
+                    Option<BusinessPayBillErrorResponseData>,
                 ),
-                reqwest::Error,
+                String,
             > = _output.await;
 
-            let (business_paybill_response_data, business_paybill_error_response_data, error_data) =
-                match _result {
-                    Ok(x) => {
-                        let (a, b) = x;
-                        (a, b, None)
+            match _result {
+                Ok(business_paybill_data) => {
+                    // Lets unpack the tuple
+                    let (business_paybill_response_data, business_paybill_error_response_data) =
+                        business_paybill_data;
+
+                    // business_paybill_response_data
+                    if let Some(response_data) = business_paybill_response_data {
+                        println!("business_paybill_response_data: {:?}", &response_data);
                     }
-                    Err(e) => {
-                        //println!("server not responding: {:?}", e.to_string());
-                        let a = BusinessPayBillResponseData {
-                            OriginatorConversationID: None,
-                            ConversationID: None,
-                            ResponseCode: None,
-                            ResponseDescription: None,
-                        };
 
-                        let b = BusinessPayBillErrorResponseData {
-                            requestId: None,
-                            errorCode: None,
-                            errorMessage: None,
-                        };
-
-                        (a, b, Some(e))
+                    // business_paybill_error_response_data
+                    if let Some(response_data) = business_paybill_error_response_data {
+                        println!("business_paybill_error_response_data: {:?}", &response_data);
                     }
-                };
-
-            println!(
-                "business_paybill_response_data: {:?}",
-                &business_paybill_response_data
-            );
-
-            println!(
-                "business_paybill_error_response_data: {:?}",
-                &business_paybill_error_response_data
-            );
-        } else if let Err(e) = _result {
-            println!("Data Error: {:?}", e)
-        } else {
-            println!("Unexpected error occured during processing")
+                }
+                Err(e) => {
+                    println!("Processing Error: {:?}", e)
+                }
+            }
         };
-    } else if let Err(e) = _result {
-        println!("Data Error: {:?}", e)
-    } else {
-        println!("Unexpected error occured during processing")
     };
 
     format!("")
@@ -443,15 +308,15 @@ pub(crate) async fn process_business_buy_goods(data: web::Data<Pool>) -> impl Re
 
     let b2b_payment_request_url: String =
         String::from("https://sandbox.safaricom.co.ke/mpesa/b2b/v1/paymentrequest");
-    let _initiator: String = String::from("test***");
+    let _initiator: String = String::from("***");
     let security_credential: String = String::from("***");
     let command_id: String = String::from("BusinessBuyGoods");
     let sender_identifier_type: String = String::from("4");
     let reciever_identifier_type: String = String::from("4");
     let _amount: u32 = 145;
-    let party_a: String = String::from("600***");
-    let party_b: String = String::from("000***");
-    let account_reference: String = String::from("353***");
+    let party_a: String = String::from("6***");
+    let party_b: String = String::from("0***");
+    let account_reference: String = String::from("3***");
     let _requester: String = String::from("2547***");
     let _remarks: String = String::from("ok");
     let queue_time_out_url: String = String::from("https://mydomain.com/b2b/queue/");
@@ -474,72 +339,43 @@ pub(crate) async fn process_business_buy_goods(data: web::Data<Pool>) -> impl Re
         result_url,
     );
 
-    /*
-    println!(
-        "business_buy_goods_details: {:?}",
-        &business_buy_goods_details
-    );
-    */
-
     if let Ok(business_buy_goods_details) = _result {
         let _result = MpesaGateway::new(consumer_key, consumer_secret, auth_token_url);
         if let Ok(mpesa_gateway) = _result {
-            let _output = mpesa_gateway.get_business_buy_goods(business_buy_goods_details);
+            let _output = mpesa_gateway.business_buy_goods(business_buy_goods_details);
 
             let _result: std::result::Result<
                 (
-                    BusinessBuyGoodsResponseData,
-                    BusinessBuyGoodsErrorResponseData,
+                    Option<BusinessBuyGoodsResponseData>,
+                    Option<BusinessBuyGoodsErrorResponseData>,
                 ),
-                reqwest::Error,
+                String,
             > = _output.await;
 
-            let (
-                business_buy_goods_response_data,
-                business_buy_goods_error_response_data,
-                error_data,
-            ) = match _result {
-                Ok(x) => {
-                    let (a, b) = x;
-                    (a, b, None)
+            match _result {
+                Ok(business_buy_goods_data) => {
+                    // Lets unpack the tuple
+                    let (business_buy_goods_response_data, business_buy_goods_error_response_data) =
+                        business_buy_goods_data;
+
+                    // business_buy_goods_response_data
+                    if let Some(response_data) = business_buy_goods_response_data {
+                        println!("business_buy_goods_response_data: {:?}", &response_data);
+                    }
+
+                    // business_buy_goods_error_response_data
+                    if let Some(response_data) = business_buy_goods_error_response_data {
+                        println!(
+                            "business_buy_goods_error_response_data: {:?}",
+                            &response_data
+                        );
+                    }
                 }
                 Err(e) => {
-                    //println!("server not responding: {:?}", e.to_string());
-                    let a = BusinessBuyGoodsResponseData {
-                        OriginatorConversationID: None,
-                        ConversationID: None,
-                        ResponseCode: None,
-                        ResponseDescription: None,
-                    };
-
-                    let b = BusinessBuyGoodsErrorResponseData {
-                        requestId: None,
-                        errorCode: None,
-                        errorMessage: None,
-                    };
-
-                    (a, b, Some(e))
+                    println!("Processing Error: {:?}", e)
                 }
-            };
-
-            println!(
-                "business_buy_goods_response_data: {:?}",
-                &business_buy_goods_response_data
-            );
-
-            println!(
-                "business_buy_goods_error_response_data: {:?}",
-                &business_buy_goods_error_response_data
-            );
-        } else if let Err(e) = _result {
-            println!("Data Error: {:?}", e)
-        } else {
-            println!("Unexpected error occured during processing")
+            }
         };
-    } else if let Err(e) = _result {
-        println!("Data Error: {:?}", e)
-    } else {
-        println!("Unexpected error occured during processing")
     };
 
     format!("")
@@ -622,7 +458,7 @@ pub(crate) async fn get_c2bpayment_result(
     let checkout_request_id = &result_data.Body.stkCallback.CheckoutRequestID;
     let result_code = &result_data.Body.stkCallback.ResultCode;
     let result_desc = &result_data.Body.stkCallback.ResultDesc;
-
+    /*
     let item_details_1 = ItemDetails {
         Name: String::from("Amount"),
         Value: MixedTypeValue::FloatValue(150.00),
@@ -631,7 +467,7 @@ pub(crate) async fn get_c2bpayment_result(
         Name: String::from("MpesaReceiptNumber"),
         Value: MixedTypeValue::StringValue(String::from("NLJ7RT61SV")),
     };
-
+    */
     let mut item_details = Vec::new();
 
     let my_item = Item { Item: item_details };
