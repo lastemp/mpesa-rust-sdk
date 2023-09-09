@@ -1007,9 +1007,9 @@ mod tests {
     }
 
     fn get_register_url_details() -> Result<RegisterUrlInputDetails, String> {
-        let api_url = String::from("***");
-        let short_code = String::from("***");
-        let response_type = String::from("***");
+        let api_url = String::from("https://sandbox.safaricom.co.ke/mpesa/c2b/v1/registerurl");
+        let short_code = String::from("60***");
+        let response_type = String::from("Completed");
         let confirmation_url = String::from("***");
         let validation_url = String::from("***");
 
