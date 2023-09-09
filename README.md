@@ -10,6 +10,7 @@ The sdk has below listed dependencies:
 - [Reqwest](https://github.com/seanmonstar/reqwest) Rust HTTP Client
 - [chrono](https://github.com/chronotope/chrono) provides all functionality needed to do correct operations on dates and times
 - [base64](https://github.com/marshallpierce/rust-base64/tree/master) Decode from Base64 format or encode into it
+- [tokio](https://github.com/tokio-rs/tokio) A runtime for writing reliable, asynchronous applications
 
 ## installation
 

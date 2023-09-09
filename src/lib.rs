@@ -773,36 +773,6 @@ impl MpesaGateway {
         business_buy_goods_timeout_parameters_output_details
     }
 
-    /*
-    fn build_business_to_customer_response_data(
-        &self,
-        originator_conversation_id: Option<String>,
-        conversation_id: Option<String>,
-        response_code: Option<String>,
-        response_description: Option<String>,
-    ) -> BusinessToCustomerResponseData {
-        BusinessToCustomerResponseData {
-            OriginatorConversationID: originator_conversation_id,
-            ConversationID: conversation_id,
-            ResponseCode: response_code,
-            ResponseDescription: response_description,
-        }
-    }
-
-    fn build_business_to_customer_error_response_data(
-        &self,
-        request_id: Option<String>,
-        error_code: Option<String>,
-        error_message: Option<String>,
-    ) -> BusinessToCustomerErrorResponseData {
-        BusinessToCustomerErrorResponseData {
-            requestId: request_id,
-            errorCode: error_code,
-            errorMessage: error_message,
-        }
-    }
-    */
-
     async fn get_auth_token(&self) -> std::result::Result<String, String> {
         let api_key = self.get_api_key();
 
@@ -996,15 +966,61 @@ impl MpesaGateway {
     }
 }
 
-/*
 #[cfg(test)]
 mod tests {
     use super::*;
 
     #[test]
-    fn it_works() {
-        let result = add(2, 2);
-        assert_eq!(result, 4);
+    fn test_mpesa_gateway() {
+        let consumer_key = String::from("***");
+        let consumer_secret = String::from("***");
+        let auth_token_url = String::from(
+            "https://sandbox.safaricom.co.ke/oauth/v1/generate?grant_type=client_credentials",
+        );
+
+        let _result = MpesaGateway::new(consumer_key, consumer_secret, auth_token_url);
+        assert_eq!(_result.is_ok(), true);
+    }
+
+    #[tokio::test]
+    async fn test_register_url() {
+        let _result = get_register_url_details();
+
+        if let Ok(register_url_details) = _result {
+            let consumer_key = String::from("***");
+            let consumer_secret = String::from("***");
+            let auth_token_url = String::from(
+                "https://sandbox.safaricom.co.ke/oauth/v1/generate?grant_type=client_credentials",
+            );
+
+            let _result = MpesaGateway::new(consumer_key, consumer_secret, auth_token_url);
+
+            if let Ok(mpesa_gateway) = _result {
+                // Initiate the request through the sdk
+                let _output = mpesa_gateway.register_url(register_url_details);
+
+                let _result: std::result::Result<RegisterUrlResponseData, String> = _output.await;
+
+                assert_eq!(_result.is_ok(), true);
+            };
+        }
+    }
+
+    fn get_register_url_details() -> Result<RegisterUrlInputDetails, String> {
+        let api_url = String::from("***");
+        let short_code = String::from("***");
+        let response_type = String::from("***");
+        let confirmation_url = String::from("***");
+        let validation_url = String::from("***");
+
+        let _result = RegisterUrlInputDetails::new(
+            api_url,
+            short_code,
+            response_type,
+            confirmation_url,
+            validation_url,
+        );
+
+        _result
     }
 }
-*/
